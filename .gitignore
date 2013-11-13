@@ -34,3 +34,13 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+#SECRETS
+#imgur_secrets
+
+#Sizeable/volatile/temporary
+#vids/*
+#gifs/*
+#problems/*
+#tmp/*
+#dump/*
