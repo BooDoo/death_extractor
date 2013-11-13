@@ -36,7 +36,9 @@ nosetests.xml
 .pydevproject
 
 #SECRETS
-#imgur_secrets
+imgur_secrets
+alreadyhadem
+vidIds
 
 #Sizeable/volatile/temporary
 #vids/*
