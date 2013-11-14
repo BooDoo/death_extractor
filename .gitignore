@@ -40,6 +40,11 @@ imgur_secrets
 alreadyhadem
 vidIds
 
+#utilities
+once.py
+start.sh
+.logs
+
 #Sizeable/volatile/temporary
 #vids/*
 #gifs/*
