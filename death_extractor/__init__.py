@@ -326,7 +326,7 @@ class CvVideo(object):
     return False
 
 def extract_and_imgur(vid_path = 'vids', out_interval=0.16667, out_duration=4, use_roi=True, init_skip=45, quiet=False, remove_source = True):
-  input_file = os.listdir(vid_path)[0]
+  input_file = [file for file in os.listdir(vid_path) if not file.endswith('part')][0]
   try:
     vid = CvVideo(os.path.join(vid_path, input_file))
     extract_death(vid, out_interval, out_duration, use_roi, init_skip, quiet)
