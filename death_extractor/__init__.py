@@ -289,6 +289,7 @@ class CvVideo(object):
 
   def upload_gif_imgur(self, imgur, album_id='T6X43'):
     """Upload file at location `out_gif` to Imgur with a description linking to original YouTube source"""
+    imgur.refresh_access_token()
     uploadedImage = imgur.upload_image(self.out_gif, title=self.vid_id, album=album_id, description="Watch full: http://youtube.com/watch?v="+self.vid_id)
     print "Uploaded to:",uploadedImage.link
     return self #chainable
