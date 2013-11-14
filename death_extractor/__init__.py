@@ -29,7 +29,7 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
     while vid.template_check():
       vid.skip_back(15) #frame, grayframe = skip_back(vid, 15)
   except cv2.error as e:
-    print "\nSkipping",vid.input_file,"due to failed template_check (probably)\nmoving to problems/",vid.input_file
+    print "\nSkipping",vid.input_file,"due to failed template_check (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
     return e
     
@@ -37,7 +37,7 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
     while vid.template_check() == False:
       vid.skip_forward(0.5)
   except cv2.error as e:
-    print "\nSkipping",vid.input_file,"due to no from_frame found... (probably)\nmoving to problems/",vid.input_file
+    print "\nSkipping",vid.input_file,"due to no from_frame found... (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
     return e
   
@@ -48,7 +48,12 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
     print "'from_frame':", vid.frame, " at ", vid.time
   
   print "Making video from_frame->to_frame..."
-  vid.clip_to_output(interval=out_interval, duration=out_duration, use_roi=use_roi).gif_from_temp_vid().clear_temp_vid()
+  try:
+    vid.clip_to_output(interval=out_interval, duration=out_duration, use_roi=use_roi).gif_from_temp_vid().clear_temp_vid()
+  except cv2.error as e:
+    print "\nSkipping",vid.input_file,"due to problem with temp_vid...\nmoving to problems/",vid.input_file_tail
+    os.rename(vid.input_file, "problems/" + vid.input_file_tail)
+    return e
   
   if not quiet:
     print "'to_frame':", vid.frame, " at ", vid.time
@@ -269,7 +274,13 @@ class CvVideo(object):
     """Call ImageMagick's `convert` from shell to create a GIF of video file found at `temp_vid`"""
     if not out_file:
         out_file = self.out_gif
-        
+    
+    try:
+      if os.path.get_size(self.temp_vid) < 6000:
+        raise cv2.error("Didn't write any frames to AVI. Wrong crop-size? Wrong codec?")
+    except os.error as e:
+      raise cv2.error("Temp AVI doesn't exist!")
+
     print "Writing to", out_file, "..."
     
     if color:
