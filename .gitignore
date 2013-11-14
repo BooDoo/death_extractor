@@ -35,8 +35,7 @@ nosetests.xml
 .project
 .pydevproject
 
-#SECRETS
-imgur_secrets
+#Queue/Cache
 alreadyhadem
 vidIds
 
