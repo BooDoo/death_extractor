@@ -42,7 +42,6 @@ vidIds
 #utilities
 once.py
 start.sh
-.logs
 
 #Sizeable/volatile/temporary
 #vids/*
