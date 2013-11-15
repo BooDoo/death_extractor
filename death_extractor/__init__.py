@@ -41,7 +41,7 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
   except cv2.error as e:
     print "\nSkipping",vid.input_file,"due to failed template_check (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
-    return e
+    raise e
     
   try:
     while vid.template_check() == False:
@@ -49,7 +49,7 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
   except cv2.error as e:
     print "\nSkipping",vid.input_file,"due to no from_frame found... (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
-    return e
+    raise e
   
   vid.skip_back(7) #Do we really want to skip back 7 and then only capture 4?
 
@@ -63,7 +63,7 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
   except cv2.error as e:
     print "\nSkipping",vid.input_file,"due to problem with temp_vid...\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
-    return e
+    raise e
   
   if not quiet:
     print "'to_frame':", vid.frame, " at ", vid.time
@@ -350,7 +350,7 @@ class CvVideo(object):
     return False
 
 def extract_and_upload(vid_path = 'vids', out_interval=0.16667, out_duration=4, use_roi=True, init_skip=45, quiet=False, remove_source = True, to_imgur=False, to_tumblr=False):
-  input_file = [file for file in os.listdir(vid_path) if not file.endswith('part')][0]
+  input_file = [file for file in os.listdir(vid_path) if not file.endswith('part') and not file.startswith('.')][0]
   try:
     vid = CvVideo(os.path.join(vid_path, input_file))
     extract_death(vid, out_interval, out_duration, use_roi, init_skip, quiet)
