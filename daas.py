@@ -17,7 +17,7 @@ def death_as_a_service(vid_path = 'vids', post_interval=3600*2, search_interval=
   yt.populate_queue()
   print "Downloading up to",max_downloads,"videos..."
   yt.dl(max_downloads)
-  extract_and_imgur(vid_path)
+  extract_and_upload(vid_path, to_imgur=True, to_tumblr=True)
   
   if search_interval:
     search_timer = set_interval(search_interval, yt.populate_queue)

@@ -2,6 +2,7 @@ import os, sys, subprocess
 import cv2
 import pyimgur
 import imgur
+import pytumblr
 import youtube as yt
 from RepeatedTimer import RepeatedTimer as set_interval
 from templates import get_templates
@@ -13,6 +14,15 @@ pyimgur.Imgur.manual_auth = imgur.imgur_manual_auth
 CLIENT_ID, CLIENT_SECRET, ALBUM_ID, REFRESH_TOKEN = [line.rstrip() for line in open('imgur_secrets','r')]
 imgur = pyimgur.init_with_refresh(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN)
 imgur.refresh_access_token()
+
+CONSUMER_KEY, CONSUMER_SECRET, OAUTH_TOKEN, OAUTH_SECRET, BLOG_NAME = [line.rstrip() for line in open('tumblr_secrets','r')]
+tumblr = pytumblr.TumblrRestClient(
+  CONSUMER_KEY,
+  CONSUMER_SECRET,
+  OAUTH_TOKEN,
+  OAUTH_SECRET
+)
+
 
 def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_skip=45, quiet=False):
   """Search through a cv2.VideoCapture (using custom `CvVideo` class) for Spelunky death, write frames to GIF (via AVI)"""
@@ -64,6 +74,7 @@ class CvVideo(object):
     self.input_file = input_file
     self.input_file_tail = os.path.split(input_file)[1]
     self.uploader, self.vid_id = os.path.splitext(self.input_file_tail)[0].split(splitter)[0:2]
+    self.vid_link = "http://youtube.com/watch?v=" + self.vid_id
     self.out_gif = os.path.join(gif_path, self.vid_id + '.gif')
     self.temp_vid = os.path.join(temp_path, self.vid_id + '.avi')
     
@@ -276,7 +287,7 @@ class CvVideo(object):
         out_file = self.out_gif
     
     try:
-      if os.path.get_size(self.temp_vid) < 6000:
+      if os.path.getsize(self.temp_vid) < 6000:
         raise cv2.error("Didn't write any frames to AVI. Wrong crop-size? Wrong codec?")
     except os.error as e:
       raise cv2.error("Temp AVI doesn't exist!")
@@ -301,10 +312,23 @@ class CvVideo(object):
   def upload_gif_imgur(self, imgur, album_id='T6X43'):
     """Upload file at location `out_gif` to Imgur with a description linking to original YouTube source"""
     imgur.refresh_access_token()
-    uploadedImage = imgur.upload_image(self.out_gif, title=self.vid_id, album=album_id, description="Watch full: http://youtube.com/watch?v="+self.vid_id)
-    print "Uploaded to:",uploadedImage.link
+    uploaded_image = imgur.upload_image(self.out_gif, title=self.vid_id, album=album_id, description="Watch full: http://youtube.com/watch?v="+self.vid_id)
+    print "Uploaded to:",uploaded_image.link
     return self #chainable
 
+  def upload_gif_tumblr(self, tumblr, blog_name=None):
+    blog_name = blog_name if blog_name else BLOG_NAME
+    print "Attempting to upload",self.out_gif,"to",blog_name,"..."
+    upload_response = tumblr.create_photo(
+      blog_name,
+      data=self.out_gif,
+      #caption="Watch full: "+self.vid_link,
+      slug=self.vid_id,
+      link=self.vid_link,
+      tags=["spelunky","daily challenge","death","gif","book of the dead",self.uploader]
+    )
+    print upload_response
+    return self #chainable
   #template_check is NOT chainable!
   #TODO?: Enable next()/cb() style to make it chainable?
   #Or create wrapper functions? "until_template" / "unless_template"?
@@ -325,15 +349,19 @@ class CvVideo(object):
     
     return False
 
-def extract_and_imgur(vid_path = 'vids', out_interval=0.16667, out_duration=4, use_roi=True, init_skip=45, quiet=False, remove_source = True):
+def extract_and_upload(vid_path = 'vids', out_interval=0.16667, out_duration=4, use_roi=True, init_skip=45, quiet=False, remove_source = True, to_imgur=False, to_tumblr=False):
   input_file = [file for file in os.listdir(vid_path) if not file.endswith('part')][0]
   try:
     vid = CvVideo(os.path.join(vid_path, input_file))
     extract_death(vid, out_interval, out_duration, use_roi, init_skip, quiet)
-    vid.upload_gif_imgur(imgur)
+    if to_imgur:
+      vid.upload_gif_imgur(imgur)
+    if to_tumblr:
+      vid.upload_gif_tumblr(tumblr)
     if remove_source:
       os.remove(os.path.join(vid_path, input_file))
   except (cv2.error, IOError, TypeError) as e:
+    print e
     return e
 
 if __name__ == '__main__':
