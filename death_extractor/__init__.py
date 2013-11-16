@@ -11,16 +11,16 @@ from templates import get_templates
 pyimgur.init_with_refresh = imgur.imgur_init_with_refresh
 pyimgur.Imgur.manual_auth = imgur.imgur_manual_auth
 #USE ENVIRONMENT VARIABLES, YOU CHUMP!
-CLIENT_ID, CLIENT_SECRET, ALBUM_ID, REFRESH_TOKEN = [line.rstrip() for line in open('imgur_secrets','r')]
-imgur = pyimgur.init_with_refresh(CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN)
-imgur.refresh_access_token()
+IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_ALBUM_ID, IMGUR_REFRESH_TOKEN = [os.getenv(line.rstrip()) for line in open('imgur_secrets','r')]
+#imgur = pyimgur.init_with_refresh(IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_REFRESH_TOKEN)
+#imgur.refresh_access_token()
 
-CONSUMER_KEY, CONSUMER_SECRET, OAUTH_TOKEN, OAUTH_SECRET, BLOG_NAME = [line.rstrip() for line in open('tumblr_secrets','r')]
+TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET, TUMBLR_OAUTH_TOKEN, TUMBLR_OAUTH_SECRET, TUMBLR_BLOG_NAME = [os.getenv(line.rstrip()) for line in open('tumblr_secrets','r')]
 tumblr = pytumblr.TumblrRestClient(
-  CONSUMER_KEY,
-  CONSUMER_SECRET,
-  OAUTH_TOKEN,
-  OAUTH_SECRET
+  TUMBLR_CONSUMER_KEY,
+  TUMBLR_CONSUMER_SECRET,
+  TUMBLR_OAUTH_TOKEN,
+  TUMBLR_OAUTH_SECRET
 )
 
 
@@ -33,40 +33,17 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
     print "Cropped dimensions (video):", vid.crop_width, vid.crop_height
     print "Cropped dimensions (frames):", vid._maxX - vid._minX, vid._maxY - vid._minY
   
-  vid.set_frame(vid.framecount - 1).skip_back(init_skip)
-
+  #Go `init_skip` sec from end, then by 15 sec until no template match
+  #Scrub forward by 0.5s increment until "Game Over" template is found
+  #Go back 7 seconds, then export `out_duration` at 1/`out_interval` fps
+  #Call ImageMagick convert on for grayscale GIF, then remove temp AVI
+  #TODO: Store 'last' called in CvVideo for more meaningful err in chain
   try:
-    while vid.template_check():
-      vid.skip_back(15) #frame, grayframe = skip_back(vid, 15)
+    vid.set_frame(vid.framecount - 1).skip_back(init_skip).while_template(-15).until_template(0.5).skip_back(7).clip_to_output(interval=out_interval, duration=out_duration, use_roi=use_roi).gif_from_temp_vid().clear_temp_vid()
   except cv2.error as e:
-    print "\nSkipping",vid.input_file,"due to failed template_check (probably)\nmoving to problems/",vid.input_file_tail
+    print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
     raise e
-    
-  try:
-    while vid.template_check() == False:
-      vid.skip_forward(0.5)
-  except cv2.error as e:
-    print "\nSkipping",vid.input_file,"due to no from_frame found... (probably)\nmoving to problems/",vid.input_file_tail
-    os.rename(vid.input_file, "problems/" + vid.input_file_tail)
-    raise e
-  
-  vid.skip_back(7) #Do we really want to skip back 7 and then only capture 4?
-
-  print "" #newline
-  if not quiet:
-    print "'from_frame':", vid.frame, " at ", vid.time
-  
-  print "Making video from_frame->to_frame..."
-  try:
-    vid.clip_to_output(interval=out_interval, duration=out_duration, use_roi=use_roi).gif_from_temp_vid().clear_temp_vid()
-  except cv2.error as e:
-    print "\nSkipping",vid.input_file,"due to problem with temp_vid...\nmoving to problems/",vid.input_file_tail
-    os.rename(vid.input_file, "problems/" + vid.input_file_tail)
-    raise e
-  
-  if not quiet:
-    print "'to_frame':", vid.frame, " at ", vid.time
 
 class CvVideo(object):
   #Constructor for the CvVideo object (requires OpenCV2 with ffmpeg support)
@@ -292,12 +269,15 @@ class CvVideo(object):
     except os.error as e:
       raise cv2.error("Temp AVI doesn't exist!")
 
-    print "Writing to", out_file, "..."
+    print "\nWriting to", out_file, "..."
     
     if color:
       subprocess.call(['convert', self.temp_vid, '-delay', '20', '-fuzz', '4%', '-layers', 'OptimizeTransparency', '+map', out_file])
     else:
       subprocess.call(['convert', self.temp_vid, '-delay', '20', '-modulate', '130,0,100', '-fuzz', '4%', '-layers', 'OptimizeTransparency', '+map', out_file])
+      
+    print "Write done"
+    
     return self #chainable
   
   def clear_temp_vid(self):
@@ -317,8 +297,8 @@ class CvVideo(object):
     return self #chainable
 
   def upload_gif_tumblr(self, tumblr, blog_name=None):
-    blog_name = blog_name if blog_name else BLOG_NAME
-    print "Attempting to upload",self.out_gif,"to",blog_name,"..."
+    blog_name = blog_name if blog_name else TUMBLR_BLOG_NAME
+    print "Uploading",self.out_gif,"to",blog_name,"..."
     upload_response = tumblr.create_photo(
       blog_name,
       data=self.out_gif,
@@ -329,9 +309,8 @@ class CvVideo(object):
     )
     print upload_response
     return self #chainable
+    
   #template_check is NOT chainable!
-  #TODO?: Enable next()/cb() style to make it chainable?
-  #Or create wrapper functions? "until_template" / "unless_template"?
   def template_check(self, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED):
     """Cycle through each image in `templates` and perform OpenCV `matchTemplate` until match found (or return False)"""
     #TODO: Enable checking against min_val for methods where that's more appropriate
@@ -348,6 +327,24 @@ class CvVideo(object):
         return True
     
     return False
+  
+  def until_template(self, interval=0.5, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, frame_skip=None):
+    """Scrub through video until a template is found"""
+    frame_skip = frame_skip if frame_skip else interval*self.fps
+    
+    while not self.template_check(templates, threshold, method):
+      self.skip_frames(frame_skip)
+      
+    return self #chainable
+
+  def while_template(self, interval=0.5, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, frame_skip=None):
+    """Scrub through video until no template is matched"""
+    frame_skip = frame_skip if frame_skip else interval*self.fps
+    
+    while self.template_check(templates, threshold, method):
+      self.skip_frames(frame_skip)
+      
+    return self #chainable
 
 def extract_and_upload(vid_path = 'vids', out_interval=0.16667, out_duration=4, use_roi=True, init_skip=45, quiet=False, remove_source = True, to_imgur=False, to_tumblr=False):
   input_file = [file for file in os.listdir(vid_path) if not file.endswith('part') and not file.startswith('.')][0]
