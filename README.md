@@ -7,12 +7,12 @@ Written in/for Python 2.7.5
 Dependencies: 
 -------------
 
-ImageMagick, youtube-dl, ffmpeg, opencv (with ffmpeg support), pyimgur  
+ImageMagick, youtube-dl, ffmpeg, opencv (with ffmpeg support), pyimgur, pytumblr  
 
 Usage:
 ------
 
-`imgur_secrets` should be populated with (1 per line): `client_id`, `client_secret`, `album_id`, `refresh_token`  
+ `imgur_secrets` and `tumblr_secrets` list environment variables which should be populated with your access information for these APIs
 then run `daas.py` (_Deaths As A Service_)
 
 How Does It Work?
@@ -27,7 +27,7 @@ With a downloaded video as `cv2.VideoCapture` object:
  - Push 4 seconds at 6fps out to a temporary AVI container
  - Convert temp AVI to grayscale GIF with ImageMagick (usually 300~600K)
  - Upload resulting GIF to Imgur/Tumblr, with link to source video
- - Rinse. Repeat.
+ - Rinse. Repeat (periodically)
 
 Why Do I Care?
 --------------
