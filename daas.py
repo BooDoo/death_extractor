@@ -2,13 +2,13 @@ from death_extractor import youtube as yt
 from death_extractor import set_interval
 from death_extractor import extract_and_upload
     
-def death_as_a_service(vid_path = 'vids', post_interval=3600*2, search_interval=3600*12, dl_interval=3600*6, max_downloads=5):
+def death_as_a_service(vid_path = 'vids', post_interval=3600*2, search_interval=3600*12, dl_interval=3600*6, max_downloads=5, to_imgur=True, to_tumblr=True):
   """Run periodic search/download/extract_and_upload operations"""
-  print "Fetching new videos and consolidating queue..."
-  yt.populate_queue()
-  print "Downloading up to",max_downloads,"videos..."
-  yt.dl(max_downloads)
-  extract_and_upload(vid_path, to_imgur=True, to_tumblr=True)
+  #print "Fetching new videos and consolidating queue..."
+  #yt.populate_queue()
+  #print "Downloading up to",max_downloads,"videos..."
+  #yt.dl(max_downloads)
+  extract_and_upload(vid_path, to_imgur, to_tumblr)
   
   if search_interval:
     search_timer = set_interval(search_interval, yt.populate_queue)

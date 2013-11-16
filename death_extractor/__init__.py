@@ -12,8 +12,8 @@ pyimgur.init_with_refresh = imgur.imgur_init_with_refresh
 pyimgur.Imgur.manual_auth = imgur.imgur_manual_auth
 #USE ENVIRONMENT VARIABLES, YOU CHUMP!
 IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_ALBUM_ID, IMGUR_REFRESH_TOKEN = [os.getenv(line.rstrip()) for line in open('imgur_secrets','r')]
-#imgur = pyimgur.init_with_refresh(IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_REFRESH_TOKEN)
-#imgur.refresh_access_token()
+imgur = pyimgur.init_with_refresh(IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_REFRESH_TOKEN)
+imgur.refresh_access_token()
 
 TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET, TUMBLR_OAUTH_TOKEN, TUMBLR_OAUTH_SECRET, TUMBLR_BLOG_NAME = [os.getenv(line.rstrip()) for line in open('tumblr_secrets','r')]
 tumblr = pytumblr.TumblrRestClient(
