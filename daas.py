@@ -1,12 +1,3 @@
-"""
-TODO:
-  - Test timers, then GO!
-  - Set up git repo with .gitignore to keep out binaries and imgur_secrets, alreadyhadem, queue
-  ? Make a Tumblr/Integrate post to Tumblr
-  X Make gallery available directly at http://img.whistlingfish.org/spelunky/
-  X Develop custom color palettes to lay over the greyscale (e.g. cave/jungle/ice/temple/hell palettes. or less specific?)
-"""
-
 from death_extractor import youtube as yt
 from death_extractor import set_interval
 from death_extractor import extract_and_upload

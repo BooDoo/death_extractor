@@ -22,11 +22,11 @@ Search for YouTube videos (via REST) of "medium" length which match query "spelu
 Maintain a queue of these video IDs, removing any we've already gotten.  
 With a downloaded video as `cv2.VideoCapture` object:  
  - Go to 45s from the video's end
- - Scrub forward by 0.5s increments, check each for the "Game Over" UI element
- - Skip back 7 seconds from the frame where we find "Game Over"
+ - Scrub forward by 0.5s increments, checking for post-death UI elements
+ - Skip back 7 seconds from the frame where we find post-death UI
  - Push 4 seconds at 6fps out to a temporary AVI container
- - Convert the temporary AVI to a grayscale GIF with ImageMagick (usually 300~600K)
- - Upload the resulting GIF into a gallery at Imgur, including a link to original YouTube video
+ - Convert temp AVI to grayscale GIF with ImageMagick (usually 300~600K)
+ - Upload resulting GIF to Imgur/Tumblr, with link to source video
  - Rinse. Repeat.
 
 Why Do I Care?
@@ -34,11 +34,15 @@ Why Do I Care?
 
 Spelunky deaths are hilarious.  
 GIF is the native language of the web at the moment.  
-`CvVideo` is a useful, though limited, higher-level class for working with `cv2.VideoCapture` objects.
+`CvVideo` is a useful, though limited, class for working with `cv2.VideoCapture` objects.
 
 TODO:
 ------
- - Move secrets to environment variables (obviously)
- - Tumblr integration
- - Support setting parameters (e.g. intervals, imgur v. tumblr) via config/command line
- - Nested options (e.g. crop region, color/gray GIF) configurable via config/command line
+ [x] Move secrets to environment variables (obviously)
+ [x] Tumblr integration
+ [ ] Map color palettes over grayscale? (e.g. cave/jungle/ice/temple/hell palettes)
+ [ ] Add `last_called` to `CvVideo` to get more meaningful errors from `try:` around chained use
+ [ ] `CvVideo.template_check()`: enable checking against `min_val` for methods where that's appropriate
+ [ ] Read death level/cause/etc for Tumblr tag purposes
+ [ ] Support setting parameters (e.g. intervals, imgur v. tumblr) via config/command line
+ [ ] Nested options (e.g. crop region, color/gray GIF) configurable via config/command line
