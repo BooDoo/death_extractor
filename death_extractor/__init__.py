@@ -23,7 +23,6 @@ tumblr = pytumblr.TumblrRestClient(
   TUMBLR_OAUTH_SECRET
 )
 
-
 def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_skip=45, quiet=False):
   """Search through a cv2.VideoCapture (using custom `CvVideo` class) for Spelunky death, write frames to GIF (via AVI)"""
   print "" #newline
@@ -43,7 +42,7 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
   except cv2.error as e:
     print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
-    raise e
+
 
 class CvVideo(object):
   #Constructor for the CvVideo object (requires OpenCV2 with ffmpeg support)
@@ -54,7 +53,7 @@ class CvVideo(object):
     self.vid_link = "http://youtube.com/watch?v=" + self.vid_id
     self.out_gif = os.path.join(gif_path, self.vid_id + '.gif')
     self.temp_vid = os.path.join(temp_path, self.vid_id + '.avi')
-    
+
     self.stream = stream = cv2.VideoCapture(input_file)
     self.framecount = stream.get(cv2.cv.CV_CAP_PROP_FRAME_COUNT)
     self.fps = stream.get(cv2.cv.CV_CAP_PROP_FPS)
@@ -64,16 +63,11 @@ class CvVideo(object):
     self.fourcc = stream.get(cv2.cv.CV_CAP_PROP_FOURCC)
     self.img = None
     self.gray = None
-    
+
     self.crop_width, self.crop_height = [int(self.width*scale_width), int(self.height*scale_height)]
-    #So "0" is device, but what is "7"?
     self.output = cv2.VideoWriter(self.temp_vid,0,7,(self.crop_width,self.crop_height))
-    
-    #For ROI/crop:
-    self._minY, self._minX = [int( (self.height - self.crop_height) / 2), int( (self.width - self.crop_width) / 2)]
-    self._maxY, self._maxX = [self._minY + self.crop_height, self._minX + self.crop_width]
-    self.roi_rect= (self._minX, self._minY, self._maxX, self._maxY)
-    
+    self.roi_reset()
+
     #set approx. aspect ratio
     if self.width == 480:
       self.aspect_ratio = (4,3)
@@ -81,10 +75,17 @@ class CvVideo(object):
       self.aspect_ratio = (8,5)
     else:
       self.aspect_ratio = (16,9)
-    
+
     #and assign templates accordingly:
     self.template_key = ["".join(str(n) for n in self.aspect_ratio)]
     self.templates = get_templates(self.template_key)
+
+  @property
+  def roi_default(self):
+    """return our default crop ROI"""
+    self._minY, self._minX = [int( (self.height - self.crop_height) / 2), int( (self.width - self.crop_width) / 2)]
+    self._maxY, self._maxX = [self._minY + self.crop_height, self._minX + self.crop_width]
+    return (self._minX, self._minY, self._maxX, self._maxY)
 
   @property
   def frame(self):
@@ -112,7 +113,7 @@ class CvVideo(object):
   @property
   def roi_rect(self):
     """The frame we use for cropping (ROI)"""
-    return self.__roi_rect
+    return self._roi_rect
   
   @roi_rect.setter
   def roi_rect(self, rect):
@@ -120,31 +121,50 @@ class CvVideo(object):
     if minX < 0 or minY < 0 or maxX < 0 or maxY < 0 or maxX < minX or maxY < minY or maxX > self.width or maxY > self.height:
       raise cv2.error("Invalid dimensions for crop/ROI rectangle.")
     else:
-      self.__roi_rect = (minX, minY, maxX, maxY)
+      self._roi_rect = (minX, minY, maxX, maxY)
 
   @property
-  def roi(self):
+  def roi(self, roi_rect=None):
     """Subset of pixels (ROI) from current frame"""
+    if not roi_rect:
+      roi_rect = self.roi_rect
     if self.img == None:
       self.read()
-    return self.img[self.roi_rect[1]:self.roi_rect[3], self.roi_rect[0]:self.roi_rect[2]]
+    return self.img[roi_rect[1]:roi_rect[3], roi_rect[0]:roi_rect[2]]
   
   @roi.setter
   def roi(self, rect):
     self.roi_rect = rect
 
   @property
-  def roi_gray(self):
+  def roi_gray(self, roi_rect=None):
     """Subset of pixels (ROI) from current frame, in grayscale"""
-    if not self.gray:
+    if not roi_rect:
+      roi_rect = self.roi_rect
+    if self.gray == None:
       self.read()
-    return self.gray[self.roi_rect[1]:self.roi_rect[3], self.roi_rect[0]:self.roi_rect[2]]
-  
-  #chainable alias for frame = ...
+    return self.gray[roi_rect[1]:roi_rect[3], roi_rect[0]:roi_rect[2]]
+
+  def roi_reset(self):
+    """Reset roi_rect to default for GIF output"""
+    self.roi_rect = self.roi_default
+    return self #chainable
+
   def set_frame(self, frame=0):
     """A chainable alias for CvVideo.frame = `frame`"""
     self.frame = frame
     return self #chainable
+  
+  def get_roi(self, color=True, rect=None):
+    """Function to get roi with custom params"""
+    if self.img == None:
+      self.read()
+    if not rect:
+      return self.roi if color else self.roi_gray
+    else:
+      source = self.img if color else self.gray
+      rect = rect if rect else self.roi_default
+      return source[rect[1]:rect[3], rect[0]:rect[2]]
   
   def _skip(self, frames=1):
     """Generic function for scrubbing back/forward by `frames`"""
@@ -186,16 +206,19 @@ class CvVideo(object):
     """Convenience function goes backwards by `seconds`"""
     return self.skip_frames(self.fps * seconds * -1) #chainable
 
-  def frame_to_file(self, out_file='frame.png', color=True, frame=-1, use_roi=False):
+  def frame_to_file(self, out_file='frame.png', color=True, frame=-1, use_roi=False, roi_rect=None):
     """Write current frame (or specified `frame`) to `out_file`, optionally in grayscale and/or cropped to `roi_rect`"""
+    if use_roi and not roi_rect:
+      roi_rect = self.roi_default
+    
     if frame >= 0: #Target specific frame?
       self.frame = frame
     self.read()
     
     if use_roi and not color:
-      cv2.imwrite(out_file, self.roi_gray)
+      cv2.imwrite(out_file, self.get_roi(False, roi_rect) )
     elif use_roi and color:
-      cv2.imwrite(out_file, self.roi)
+      cv2.imwrite(out_file, self.get_roi(True, roi_rect) )
     elif not color:
       cv2.imwrite(out_file, self.gray)
     else:
@@ -203,10 +226,13 @@ class CvVideo(object):
     
     return self #chainable
   
-  def frame_to_output(self, color=True, frame=-1, use_roi=False):
+  def frame_to_output(self, color=True, frame=-1, use_roi=False, roi_rect=None):
     """Write current frame (or specified `frame`) to `CvVide.output` buffer, optionally in grayscale and/or cropped to `roi_rect`"""
     if not self.output:
       raise cv2.error("No output stream for writing!")
+    
+    if use_roi and not roi_rect:
+      roi_rect = self.roi_default
     
     if frame >= 0: #Target specific frame?
       self.frame = frame
@@ -216,9 +242,9 @@ class CvVideo(object):
     #cv2.imwrite('dump/'+ self.vid_id + str(frame) + '.png', self.roi)
 
     if use_roi and not color:
-      self.output.write(self.roi_gray)
+      self.output.write(self.get_roi(False, roi_rect) )
     elif use_roi and color:
-      self.output.write(self.roi)
+      self.output.write(self.get_roi(True, roi_rect) )
     elif not color:
       self.output.write(self.gray)
     else:
@@ -227,8 +253,11 @@ class CvVideo(object):
     return self #chainable
   
   #interval is in seconds, can be negative.
-  def clip_to_output(self, from_frame=-1, to_frame=-1, frame_skip=None, interval=None, duration=None, color=True, use_roi=False):
+  def clip_to_output(self, from_frame=-1, to_frame=-1, frame_skip=None, interval=None, duration=None, color=True, use_roi=False, roi_rect=None):
     """Take a clip of input `stream` and write to `output` buffer as series of frames"""
+    if use_roi and not roi_rect:
+      roi_rect = self.roi_rect
+    
     if from_frame < 0: #no specific frame? start from where we are
         from_frame = self.frame
     
@@ -311,7 +340,7 @@ class CvVideo(object):
     return self #chainable
     
   #template_check is NOT chainable!
-  def template_check(self, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED):
+  def template_check(self, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, use_roi=False, roi_rect=None):
     """Cycle through each image in `templates` and perform OpenCV `matchTemplate` until match found (or return False)"""
     #TODO: Enable checking against min_val for methods where that's more appropriate
     
@@ -320,15 +349,19 @@ class CvVideo(object):
     elif templates == None:
       raise cv2.error("No template(s) to match against!")
     
+    roi_rect = roi_rect if roi_rect else self.roi_default
+    
+    target = self.get_roi(False, roi_rect) if use_roi else self.gray
+    
     for template in templates:
-      res = cv2.matchTemplate(self.gray, template, method)
+      res = cv2.matchTemplate(target, template, method)
       min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
       if max_val >= threshold:
         return True
     
     return False
   
-  def until_template(self, interval=0.5, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, frame_skip=None):
+  def until_template(self, interval=0.5, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, frame_skip=None, use_roi=False, roi_rect=None):
     """Scrub through video until a template is found"""
     frame_skip = frame_skip if frame_skip else interval*self.fps
     
@@ -337,7 +370,7 @@ class CvVideo(object):
       
     return self #chainable
 
-  def while_template(self, interval=0.5, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, frame_skip=None):
+  def while_template(self, interval=0.5, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, frame_skip=None, use_roi=False, roi_rect=None):
     """Scrub through video until no template is matched"""
     frame_skip = frame_skip if frame_skip else interval*self.fps
     
@@ -359,7 +392,8 @@ def extract_and_upload(vid_path = 'vids', out_interval=0.16667, out_duration=4, 
       os.remove(os.path.join(vid_path, input_file))
   except (cv2.error, IOError, TypeError) as e:
     print e
-    return e
+    #if at first you don't succeed...
+    return extract_and_upload(vid_path, out_interval, out_duration, use_roi, init_skip, quiet, remove_source, to_imgur, to_tumblr)
 
 if __name__ == '__main__':
   print "Sorry, I'm not made to work that way (yet...)"
