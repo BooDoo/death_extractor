@@ -8,20 +8,25 @@ from RepeatedTimer import RepeatedTimer as set_interval
 from templates import get_templates
 
 #Assign some custom utility functions to pyimgur module:
+
 pyimgur.init_with_refresh = imgur.imgur_init_with_refresh
 pyimgur.Imgur.manual_auth = imgur.imgur_manual_auth
-#USE ENVIRONMENT VARIABLES, YOU CHUMP!
-IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_ALBUM_ID, IMGUR_REFRESH_TOKEN = [os.getenv(line.rstrip()) for line in open('imgur_secrets','r')]
-imgur = pyimgur.init_with_refresh(IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_REFRESH_TOKEN)
-imgur.refresh_access_token()
 
+IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_ALBUM_ID, IMGUR_REFRESH_TOKEN = [os.getenv(line.rstrip()) for line in open('imgur_secrets','r')]
 TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET, TUMBLR_OAUTH_TOKEN, TUMBLR_OAUTH_SECRET, TUMBLR_BLOG_NAME = [os.getenv(line.rstrip()) for line in open('tumblr_secrets','r')]
-tumblr = pytumblr.TumblrRestClient(
-  TUMBLR_CONSUMER_KEY,
-  TUMBLR_CONSUMER_SECRET,
-  TUMBLR_OAUTH_TOKEN,
-  TUMBLR_OAUTH_SECRET
-)
+try:
+  imgur = pyimgur.init_with_refresh(IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_REFRESH_TOKEN)
+  imgur.refresh_access_token()
+
+  
+  tumblr = pytumblr.TumblrRestClient(
+    TUMBLR_CONSUMER_KEY,
+    TUMBLR_CONSUMER_SECRET,
+    TUMBLR_OAUTH_TOKEN,
+    TUMBLR_OAUTH_SECRET
+  )
+except pyimgur.requests.exceptions.ConnectionError as e:
+  print "No internet?"
 
 def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_skip=45, quiet=False):
   """Search through a cv2.VideoCapture (using custom `CvVideo` class) for Spelunky death, write frames to GIF (via AVI)"""
@@ -38,7 +43,11 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
   #Call ImageMagick convert on for grayscale GIF, then remove temp AVI
   #TODO: Store 'last' called in CvVideo for more meaningful err in chain
   try:
-    vid.set_frame(vid.framecount - 1).skip_back(init_skip).while_template(-15).until_template(0.5).skip_back(7).clip_to_output(interval=out_interval, duration=out_duration, use_roi=use_roi).gif_from_temp_vid().clear_temp_vid()
+    vid.set_frame(vid.framecount - 1).skip_back(init_skip) #.frame_to_file('dump/'+vid.vid_id+'/initskip-'+str(int(vid.frame))+'.png')
+    vid.while_template(-15) #.frame_to_file('dump/'+vid.vid_id+'/notemplate-'+str(int(vid.frame))+'.png')
+    vid.skip_back().while_template(-2) #.frame_to_file('dump/'+vid.vid_id+'/notemplate2'+str(int(vid.frame))+'.png')
+    vid.until_template(0.5) #.frame_to_file('dump/'+vid.vid_id+'/gofound-'+str(int(vid.frame))+'.png')
+    vid.skip_back(7).clip_to_output(interval=out_interval, duration=out_duration, use_roi=use_roi).gif_from_temp_vid().clear_temp_vid()
   except cv2.error as e:
     print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
@@ -227,7 +236,7 @@ class CvVideo(object):
     return self #chainable
   
   def frame_to_output(self, color=True, frame=-1, use_roi=False, roi_rect=None):
-    """Write current frame (or specified `frame`) to `CvVide.output` buffer, optionally in grayscale and/or cropped to `roi_rect`"""
+    """Write current frame (or specified `frame`) to `CvVideo.output` buffer, optionally in grayscale and/or cropped to `roi_rect`"""
     if not self.output:
       raise cv2.error("No output stream for writing!")
     
@@ -239,7 +248,7 @@ class CvVideo(object):
     self.read()
     
     #dump output frames
-    #cv2.imwrite('dump/'+ self.vid_id + str(frame) + '.png', self.roi)
+    #cv2.imwrite('dump/'+ self.vid_id + str(int(frame)) + '.png', self.roi)
 
     if use_roi and not color:
       self.output.write(self.get_roi(False, roi_rect) )
@@ -353,10 +362,14 @@ class CvVideo(object):
     
     target = self.get_roi(False, roi_rect) if use_roi else self.gray
     
+    #dump checked frames
+    cv2.imwrite('dump/'+ self.vid_id + '/' + str(int(self.frame)) + '.png', target)
+    
     for template in templates:
       res = cv2.matchTemplate(target, template, method)
       min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
       if max_val >= threshold:
+        #cv2.imwrite('dump/'+ self.vid_id + '/' + str(int(self.frame)) + '-found.png', target)
         return True
     
     return False
