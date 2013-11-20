@@ -58,7 +58,11 @@ class CvVideo(object):
   def __init__(self, input_file, gif_path='gifs', temp_path='tmp', splitter='___', scale_width=0.6, scale_height=0.5):
     self.input_file = input_file
     self.input_file_tail = os.path.split(input_file)[1]
-    self.uploader, self.vid_id = os.path.splitext(self.input_file_tail)[0].split(splitter)[0:2]
+    try:
+      self.uploader, self.vid_id = os.path.splitext(self.input_file_tail)[0].split(splitter)[0:2]
+    except ValueError as e:
+      self.uploader, self.vid_id = 'Unknown', os.path.splitext(self.input_file_tail)[0]
+      
     self.vid_link = "http://youtube.com/watch?v=" + self.vid_id
     self.out_gif = os.path.join(gif_path, self.vid_id + '.gif')
     self.temp_vid = os.path.join(temp_path, self.vid_id + '.avi')
@@ -285,6 +289,9 @@ class CvVideo(object):
     else:
       frame_skip = abs(frame_skip)
     
+    #set a timestamp where we start:
+    self.clip_start = self.time
+    
     #ensure ints
     from_frame = int(from_frame)
     to_frame = int(to_frame)
@@ -334,8 +341,11 @@ class CvVideo(object):
     print "Uploaded to:",uploaded_image.link
     return self #chainable
 
-  def upload_gif_tumblr(self, tumblr, blog_name=None):
+  def upload_gif_tumblr(self, tumblr, blog_name=None, link_timestamp=True):
     blog_name = blog_name if blog_name else TUMBLR_BLOG_NAME
+    if link_timestamp:
+      self.vid_link += "&t=%is" % (self.clip_start or 0)
+
     print "Uploading",self.out_gif,"to",blog_name,"..."
     upload_response = tumblr.create_photo(
       blog_name,
