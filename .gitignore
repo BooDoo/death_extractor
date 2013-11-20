@@ -41,6 +41,7 @@ vidIds
 
 #utilities
 once.py
+manual.py
 start.sh
 .logs
 
@@ -50,3 +51,4 @@ start.sh
 #problems/*
 #tmp/*
 #dump/*
+hardmode
