@@ -39,7 +39,7 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
   
   #Go `init_skip` sec from end, then by 15 sec until no template match
   #Scrub forward by 0.5s increment until "Game Over" template is found
-  #Go back 7 seconds, then export `out_duration` at 1/`out_interval` fps
+  #Go back 6 seconds, then export `out_duration` at 1/`out_interval` fps
   #Call ImageMagick convert on for grayscale GIF, then remove temp AVI
   #TODO: Store 'last' called in CvVideo for more meaningful err in chain
   try:
@@ -47,7 +47,7 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
     vid.while_template(-15) #.frame_to_file('dump/'+vid.vid_id+'/notemplate-'+str(int(vid.frame))+'.png')
     vid.skip_back().while_template(-2) #.frame_to_file('dump/'+vid.vid_id+'/notemplate2'+str(int(vid.frame))+'.png')
     vid.until_template(0.5) #.frame_to_file('dump/'+vid.vid_id+'/gofound-'+str(int(vid.frame))+'.png')
-    vid.skip_back(7).clip_to_output(interval=out_interval, duration=out_duration, use_roi=use_roi).gif_from_temp_vid().clear_temp_vid()
+    vid.skip_back(6).clip_to_output(interval=out_interval, duration=out_duration, use_roi=use_roi).gif_from_temp_vid().clear_temp_vid()
   except cv2.error as e:
     print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
