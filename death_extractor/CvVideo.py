@@ -39,7 +39,7 @@ class CvVideo(object):
       self.aspect_ratio = (16,9)
 
     #and assign templates accordingly:
-    self.template_key = ["".join(str(n) for n in self.aspect_ratio)]
+    self.template_key = "".join(str(n) for n in self.aspect_ratio)
     self.templates = get_templates(self.template_key)
 
   @property
@@ -252,10 +252,16 @@ class CvVideo(object):
       
     return self #chainable
   
-  def gif_from_temp_vid(self, color=False, out_file=None):
+  def gif_from_temp_vid(self, out_file=None, color=False, brightness=100, saturation=100, hue=100, delay=20, fuzz="4%", layers="OptimizeTransparency", flush_map=True):
     """Call ImageMagick's `convert` from shell to create a GIF of video file found at `temp_vid`"""
     if not out_file:
-        out_file = self.out_gif
+      out_file = self.out_gif
+
+    if not color:
+      saturation = 0
+
+    #values associated with `-modulate`
+    bsh = map(str, [brightness, saturation, hue])
     
     try:
       if os.path.getsize(self.temp_vid) < 6000:
@@ -265,10 +271,20 @@ class CvVideo(object):
 
     print "\nWriting to", out_file, "..."
     
-    if color:
-      subprocess.call(['convert', self.temp_vid, '-delay', '20', '-fuzz', '4%', '-layers', 'OptimizeTransparency', '+map', out_file])
-    else:
-      subprocess.call(['convert', self.temp_vid, '-delay', '20', '-modulate', '130,0,100', '-fuzz', '4%', '-layers', 'OptimizeTransparency', '+map', out_file])
+    command = ['convert', self.temp_vid]
+    if delay > 0:
+      command.extend(['-delay', str(delay)])
+    if not all([v == '100' for v in bsh]):
+      command.extend(['-modulate', ",".join(bsh)])
+    if fuzz:
+      command.extend(['-fuzz', str(fuzz)])
+    if layers:
+      command.extend(['-layers', str(layers)])
+    if flush_map:
+      command.extend(['+map'])
+    command.append(out_file)
+
+    subprocess.call(command)
       
     print "Write done"
     
