@@ -21,19 +21,20 @@ How Does It Work?
 Search for YouTube videos (via REST) of "medium" length which match query "spelunky+daily+challenge".  
 Maintain a queue of these video IDs, removing any we've already gotten.  
 With a downloaded video as `cv2.VideoCapture` object:  
- - Go to 45s from the video's end
- - Scrub forward by 0.5s increments, checking for post-death UI elements
- - Skip back 7 seconds from the frame where we find post-death UI
- - Push 4 seconds at 6fps out to a temporary AVI container
- - Convert temp AVI to grayscale GIF with ImageMagick (usually 300~600K)
- - Upload resulting GIF to Imgur/Tumblr, with link to source video
+ - Start at the last frame of the video
+ - Scrub back by ~1sec increments until the "skull" UI element is found
+ - Scrub forward by ~0.2s increments to find when the skull is no longer visible
+ - Jump back ~3.85sec
+ - Push ~4 seconds at ~6fps out to a temporary AVI container
+ - Convert temp AVI to grayscale GIF with ImageMagick (usually 350K~650K)
+ - Upload resulting GIF to Imgur/Tumblr, with link to source video (at timestamp)
  - Rinse. Repeat (periodically)
 
 Why Do I Care?
 --------------
 
 Spelunky deaths are hilarious.  
-GIF is the native language of the web at the moment.  
+GIF is the native language of Tumblr.  
 `CvVideo` is a useful, though limited, class for working with `cv2.VideoCapture` objects.
 
 TODO:
