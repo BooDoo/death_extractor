@@ -307,7 +307,7 @@ class CvVideo(object):
     return self #chainable
 
   def upload_gif_tumblr(self, tumblr, blog_name=None, link_timestamp=True):
-    blog_name = blog_name if blog_name else TUMBLR_BLOG_NAME
+    blog_name = blog_name if blog_name else os.getenv('TUMBLR_BLOG_NAME')
     if link_timestamp:
       self.vid_link += "&t=%is" % (self.clip_start or 0)
 
