@@ -8,7 +8,6 @@ from CvVideo import CvVideo
 from RepeatedTimer import RepeatedTimer as set_interval
 
 #Assign some custom utility functions to pyimgur module:
-
 pyimgur.init_with_refresh = imgur.imgur_init_with_refresh
 pyimgur.Imgur.manual_auth = imgur.imgur_manual_auth
 
@@ -43,11 +42,20 @@ def extract_death(vid, out_interval=0.16667, out_duration=4, use_roi=True, init_
   #Call ImageMagick convert on for grayscale GIF, then remove temp AVI
   #TODO: Store 'last' called in CvVideo for more meaningful err in chain
   try:
+    """
+    #old logic checking against gameover text, leaderboard text, and vine background element from unpopulate leaderboard
     vid.set_frame(vid.framecount - 1).skip_back(init_skip) #.frame_to_file('dump/'+vid.vid_id+'/initskip-'+str(int(vid.frame))+'.png')
     vid.while_template(-15) #.frame_to_file('dump/'+vid.vid_id+'/notemplate-'+str(int(vid.frame))+'.png')
     vid.skip_back().while_template(-2) #.frame_to_file('dump/'+vid.vid_id+'/notemplate2'+str(int(vid.frame))+'.png')
     vid.until_template(0.5) #.frame_to_file('dump/'+vid.vid_id+'/gofound-'+str(int(vid.frame))+'.png')
     vid.skip_back(6).clip_to_output(interval=out_interval, duration=out_duration, use_roi=use_roi).gif_from_temp_vid().clear_temp_vid()
+    """
+    #new template finding logic: UI skull-based, more tightly targeted
+    vid.set_frame(vid.framecount - 1).read()
+    vid.until_template(-1, templates=vid.templates[-1:])
+    vid.while_template(frame_skip=6, templates=vid.templates[-1:])
+    vid.skip_back(3.85).clip_to_output(frame_skip=5, duration=4, use_roi=True).gif_from_temp_vid().clear_temp_vid()
+
   except cv2.error as e:
     print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
