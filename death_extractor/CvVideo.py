@@ -252,7 +252,7 @@ class CvVideo(object):
       
     return self #chainable
   
-  def gif_from_temp_vid(self, out_file=None, color=False, brightness=100, saturation=100, hue=100, delay=20, fuzz="4%", layers="OptimizeTransparency", flush_map=True):
+  def gif_from_temp_vid(self, out_file=None, color=False, brightness=100, saturation=100, hue=100, delay=10, fuzz="4%", layers="OptimizeTransparency", flush_map=True):
     """Call ImageMagick's `convert` from shell to create a GIF of video file found at `temp_vid`"""
     if not out_file:
       out_file = self.out_gif
@@ -271,9 +271,12 @@ class CvVideo(object):
 
     print "\nWriting to", out_file, "..."
     
-    command = ['convert', self.temp_vid]
+    command = ['convert']
     if delay > 0:
       command.extend(['-delay', str(delay)])
+
+    command.append(self.temp_vid)
+
     if not all([v == '100' for v in bsh]):
       command.extend(['-modulate', ",".join(bsh)])
     if fuzz:
@@ -285,11 +288,10 @@ class CvVideo(object):
     command.append(out_file)
 
     subprocess.call(command)
-      
+
     print "Write done"
-    
     return self #chainable
-  
+
   def clear_temp_vid(self):
     """Delete the file at location `temp_vid`"""
     try:
