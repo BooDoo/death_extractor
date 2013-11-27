@@ -3,7 +3,7 @@ from death_extractor import youtube as yt
 from death_extractor import set_interval
 from death_extractor import extract_and_upload
     
-def death_as_a_service(vid_path = 'vids', post_interval=3600*2, search_interval=3600*6, dl_interval=3600*3, max_downloads=4, to_imgur=True, to_tumblr=True):
+def death_as_a_service(vid_path = 'vids', post_interval=3600*2, search_interval=3600*6, dl_interval=3600*3, max_downloads=4, to_imgur=False, to_tumblr=True):
   """Run periodic search/download/extract_and_upload operations"""
   print "Fetching new videos and consolidating queue..."
   yt.populate_queue()
@@ -17,7 +17,7 @@ def death_as_a_service(vid_path = 'vids', post_interval=3600*2, search_interval=
   if dl_interval:
     dl_timer = set_interval(dl_interval, yt.dl, max_downloads)
   if post_interval:
-    post_timer = set_interval(post_interval, extract_and_upload, vid_path, to_imgur, to_tumblr)
+    post_timer = set_interval(post_interval, extract_and_upload, vid_path, to_imgur=to_imgur, to_tumblr=to_tumblr)
      
 if __name__ == '__main__':
   print "Running from console..."
