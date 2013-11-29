@@ -7,9 +7,7 @@ def death_as_a_service(vid_path = 'vids', post_interval=3600*2, search_interval=
   """Run periodic search/download/extract_and_upload operations"""
   print "Fetching new videos and consolidating queue..."
   yt.populate_queue()
-  if len([file for file in os.listdir(vid_path) if not file.endswith('part') and not file.startswith('.')]) < 4:
-    print "Downloading up to",max_downloads,"videos..."
-    yt.dl(max_downloads)
+  yt.dl(max_downloads)
   extract_and_upload(vid_path, to_imgur, to_tumblr)
   
   if search_interval:

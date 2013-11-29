@@ -21,6 +21,8 @@ def populate_queue(queueFile='vidIds', dl_log_file='alreadyhadem'):
   
   return new_queue
 
-def dl(max_downloads=5, vid_path='vids', queue_file='vidIds', dl_log_file='alreadyhadem', rate_limit="1.2M"):
-  subprocess.call(['youtube-dl', '--restrict-filenames', '-f18', '-o', os.path.join(vid_path, '%(uploader)s___%(id)s.%(ext)s'), '--download-archive', dl_log_file, '--rate-limit', rate_limit, '--max-downloads', str(max_downloads), '-a', queue_file])
-  
+def dl(max_downloads=5, vid_path='vids', queue_file='vidIds', dl_log_file='alreadyhadem', rate_limit="1.2M", threshold=6):
+  if len([file for file in os.listdir(vid_path) if not file.endswith('part') and not file.startswith('.')]) < threshold:
+    subprocess.call(['youtube-dl', '--restrict-filenames', '-f18', '-o', os.path.join(vid_path, '%(uploader)s___%(id)s.%(ext)s'), '--download-archive', dl_log_file, '--rate-limit', rate_limit, '--max-downloads', str(max_downloads), '-a', queue_file])
+  else:
+    print "Enough videos already! Skipping download this pass."
