@@ -4,6 +4,7 @@ import pyimgur
 import imgur
 import pytumblr
 import youtube as yt
+import util
 from CvVideo import CvVideo
 from RepeatedTimer import RepeatedTimer as set_interval
 
@@ -27,7 +28,7 @@ try:
 except pyimgur.requests.exceptions.ConnectionError as e:
   print "No internet?"
 
-def extract_death(vid, out_frame_skip=5, out_duration=4, use_roi=True, gif_color=False, gif_delay=None, quiet=False):
+def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=None, quiet=False):
   """Search through a cv2.VideoCapture (using custom `CvVideo` class) for Spelunky death, write frames to GIF (via AVI)"""
   print "" #newline
   print vid.vid_id, vid.framecount, vid.fps, vid.fourcc, vid.width, vid.height, vid.aspect_ratio, "..."
@@ -45,23 +46,19 @@ def extract_death(vid, out_frame_skip=5, out_duration=4, use_roi=True, gif_color
   #Go back 3.85 seconds, then export `out_duration` at `vid.fps`/`out_frame_skip` fps
   #Call ImageMagick convert on for grayscale GIF, then remove temp AVI
   #TODO: Store 'last' called in CvVideo for more meaningful err in chain
-  try:
-    #new template finding logic: UI skull-based, more tightly targeted
-    vid.set_frame(vid.framecount - 1).read()
-    vid.until_template(-1, templates=vid.templates[-1:])
-    vid.while_template(frame_skip=6, templates=vid.templates[-1:])
-    vid.skip_back(3.85)
-    vid.clip_to_output(frame_skip=out_frame_skip, duration=out_duration, use_roi=use_roi)
-    vid.gif_from_temp_vid(color=gif_color,delay=gif_delay)
-    vid.clear_temp_vid()
 
-  except cv2.error as e:
-    print e
-    print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
-    os.rename(vid.input_file, "problems/" + vid.input_file_tail)
+  #new template finding logic: UI skull-based, more tightly targeted
+  vid.read_frame(vid.framecount - 1)
+  vid.until_template(-1, templates=vid.templates[-1:])
+  vid.while_template(frame_skip=6, templates=vid.templates[-1:])
+  vid.skip_back(3.85)
+  vid.clip_to_output(frame_skip=out_frame_skip, duration=out_duration, use_roi=use_roi)
+  vid.gif_from_temp_vid(color=gif_color,delay=gif_delay)
+  vid.clear_temp_vid()
+
 
 #TODO: Clean up these rat's nests of arguments!
-def extract_and_upload(vid_path = 'vids', out_frame_skip=4, out_duration=4, use_roi=True, gif_color=False, gif_delay=8, quiet=False, remove_source=True, to_imgur=False, to_tumblr=False):
+def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=7, quiet=False, remove_source=True, to_imgur=False, to_tumblr=False):
   input_file = [file for file in os.listdir(vid_path) if not file.endswith('part') and not file.startswith('.')][0]
   try:
     vid = CvVideo(os.path.join(vid_path, input_file))
@@ -72,10 +69,11 @@ def extract_and_upload(vid_path = 'vids', out_frame_skip=4, out_duration=4, use_
       vid.upload_gif_tumblr(tumblr)
     if remove_source:
       os.remove(os.path.join(vid_path, input_file))
-  except (cv2.error, IOError, TypeError) as e:
+  except (cv2.error, IOError, TypeError, AttributeError) as e:
     print e
-    #if at first you don't succeed...
-    return extract_and_upload(vid_path, out_frame_skip=out_frame_skip, out_duration=out_duration, use_roi=use_roi, gif_color=gif_color, gif_delay=gif_delay, quiet=quiet, remove_source=remove_source, to_imgur=to_imgur, to_tumblr=to_tumblr)
+    print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
+    os.rename(vid.input_file, "problems/" + vid.input_file_tail)
+    util.recall(extract_and_upload)
 
 if __name__ == '__main__':
   print "Sorry, I'm not made to work that way (yet...)"
