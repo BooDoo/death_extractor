@@ -4,7 +4,7 @@ from templates import get_templates
 
 class CvVideo(object):
   #Constructor for the CvVideo object (requires OpenCV2 with ffmpeg support)
-  def __init__(self, input_file, gif_path='gifs', temp_path='tmp', splitter='___', scale_width=0.6, scale_height=0.5):
+  def __init__(self, input_file, gif_path='gifs', temp_path='tmp', splitter='___', scale_width=0.6, scale_height=0.45):
     self.input_file = input_file
     self.input_file_tail = os.path.split(input_file)[1]
     try:
@@ -214,6 +214,10 @@ class CvVideo(object):
   
     return self #chainable
   
+  def reset_output(self):
+    self.output = cv2.VideoWriter(self.temp_vid,0,7,(self.crop_width,self.crop_height))
+    return self #chainable
+
   #interval is in seconds, can be negative.
   def clip_to_output(self, from_frame=-1, to_frame=-1, frame_skip=None, interval=None, duration=None, color=True, use_roi=False, roi_rect=None):
     """Take a clip of input `stream` and write to `output` buffer as series of frames"""
@@ -312,6 +316,10 @@ class CvVideo(object):
     blog_name = blog_name if blog_name else os.getenv('TUMBLR_BLOG_NAME')
     if link_timestamp:
       self.vid_link += "&t=%is" % (self.clip_start or 0)
+
+    if os.path.getsize(self.out_gif) > 1010000:
+      print "Output GIF is too large. Using frame_skip 5..."
+      self.reset_output().skip_back(4).clip_to_output(frame_skip=5, duration=4, use_roi=use_roi).gif_from_temp_vid(color=False,delay=10)
 
     print "Uploading",self.out_gif,"to",blog_name,"..."
     upload_response = tumblr.create_photo(
