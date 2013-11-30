@@ -18,7 +18,6 @@ try:
   imgur = pyimgur.init_with_refresh(IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_REFRESH_TOKEN)
   imgur.refresh_access_token()
 
-  
   tumblr = pytumblr.TumblrRestClient(
     TUMBLR_CONSUMER_KEY,
     TUMBLR_CONSUMER_SECRET,
@@ -58,7 +57,7 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
 
 
 #TODO: Clean up these rat's nests of arguments!
-def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=7, quiet=False, remove_source=True, to_imgur=False, to_tumblr=False):
+def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=8, quiet=False, remove_source=True, to_imgur=False, to_tumblr=False):
   input_file = [file for file in os.listdir(vid_path) if not file.endswith('part') and not file.startswith('.')][0]
   try:
     vid = CvVideo(os.path.join(vid_path, input_file))

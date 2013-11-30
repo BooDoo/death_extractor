@@ -25,7 +25,7 @@ With a downloaded video as `cv2.VideoCapture` object:
  - Scrub back by ~1sec increments until the "skull" UI element is found
  - Scrub forward by ~0.2s increments to find when the skull is no longer visible
  - Jump back ~3.85sec
- - Push ~4 seconds at ~6fps out to a temporary AVI container
+ - Push ~4 seconds at ~10fps out to a temporary AVI container
  - Convert temp AVI to grayscale GIF with ImageMagick (usually 350K~650K)
  - Upload resulting GIF to Imgur/Tumblr, with link to source video (at timestamp)
  - Rinse. Repeat (periodically)
@@ -42,8 +42,11 @@ TODO:
  [x] Move secrets to environment variables (obviously)
  [x] Tumblr integration
  [ ] Map color palettes over grayscale? (e.g. cave/jungle/ice/temple/hell palettes)
- [ ] Add `last_called` to `CvVideo` to get more meaningful errors from `try:` around chained use
+ [ ] Add `last_called` to `CvVideo` to get more meaningful errors from `try:` around chained use?
  [ ] `CvVideo.template_check()`: enable checking against `min_val` for methods where that's appropriate
- [ ] Read death level/cause/etc for Tumblr tag purposes
+ [ ] Threshold of how far to scrub back looking for skull UI? 2 minutes? (in case no death in video.)
+ [ ] Test `template_check()` with ROI v. without for efficiency purposes?
+ [ ] Read death level/cause/character/etc for Tumblr taxonomy/tagging?
+ [ ] Enable download/processing at higher res (-f36 instead of -f18 in `yt.dl()`)
  [ ] Support setting parameters (e.g. intervals, imgur v. tumblr) via config/command line
  [ ] Nested options (e.g. crop region, color/gray GIF) configurable via config/command line
