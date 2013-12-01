@@ -319,7 +319,7 @@ class CvVideo(object):
 
     if os.path.getsize(self.out_gif) > 1010000:
       print "Output GIF is too large. Using frame_skip 5..."
-      self.reset_output().skip_back(4).clip_to_output(frame_skip=5, duration=4, use_roi=use_roi).gif_from_temp_vid(color=False,delay=10)
+      self.reset_output().skip_back(4).clip_to_output(frame_skip=5, duration=4, use_roi=True).gif_from_temp_vid(color=False,delay=10)
 
     print "Uploading",self.out_gif,"to",blog_name,"..."
     upload_response = tumblr.create_photo(
