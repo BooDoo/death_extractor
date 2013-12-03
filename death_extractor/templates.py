@@ -1,9 +1,94 @@
 import cv2
 
+#TO GET: JUNGLE 2-4, TEMPLE 4-3, WORM, HAUNTED CASTLE, Big chest w/o Yang
+
 _templates = {
-'43':  [cv2.imread('templates/gameover_43.png',0), cv2.imread('templates/leaderboard_43.png',0), cv2.imread('templates/leaderboard-vines_43.png',0), cv2.imread('templates/skull_43.png',0)], 
-'85':  [cv2.imread('templates/gameover_85.png',0), cv2.imread('templates/leaderboard_85.png',0), cv2.imread('templates/leaderboard-vines_85.png',0), cv2.imread('templates/skull_85.png',0)],
-'169': [cv2.imread('templates/gameover_169.png',0),cv2.imread('templates/leaderboard_169.png',0),cv2.imread('templates/leaderboard-vines_169.png',0),cv2.imread('templates/skull_169.png',0)]
+  '43':  [
+    ('skull', cv2.imread('templates/skull_43.png',0)),
+    ('Mines 1-1', cv2.imread('templates/mines11_43.png',0)),
+    ('Mines 1-2', cv2.imread('templates/mines12_43.png',0)),
+    ('Mines 1-3', cv2.imread('templates/mines13_43.png',0)),
+    ('Mines 1-4', cv2.imread('templates/mines14_43.png',0)),
+    ('Jungle 2-1', cv2.imread('templates/jungle21_43.png',0)),
+    ('Jungle 2-2', cv2.imread('templates/jungle22_43.png',0)),
+    ('Jungle 2-3', cv2.imread('templates/jungle23_43.png',0)),
+    #('Jungle 2-4', cv2.imread('templates/jungle24_43.png',0)),
+    ('Black Market', cv2.imread('templates/blackmarket_43.png',0)),
+    ('Ice Caves 3-1', cv2.imread('templates/icecaves31_43.png',0)),
+    ('Ice Caves 3-2', cv2.imread('templates/icecaves32_43.png',0)),
+    ('Ice Caves 3-3', cv2.imread('templates/icecaves33_43.png',0)),
+    ('Ice Caves 3-4', cv2.imread('templates/icecaves34_43.png',0)),
+    ('Temple 4-1', cv2.imread('templates/temple41_43.png',0)),
+    ('Temple 4-2', cv2.imread('templates/temple41_43.png',0)),
+    #('Temple 4-3', cv2.imread('templates/temple41_43.png',0)),
+    ('Olmec\'s Lair', cv2.imread('templates/olmecslair_43.png',0)),
+    ('Hell 5-1', cv2.imread('templates/hell51_43.png',0)),
+    ('Hell 5-2', cv2.imread('templates/hell52_43.png',0)),
+    ('Hell 5-3', cv2.imread('templates/hell53_43.png',0)),
+    ('Yama\'s Throne', cv2.imread('templates/yamasthrone_43.png',0)),
+    ('Mothership', cv2.imread('templates/mothership_43.png',0)),
+    ('City of Gold', cv2.imread('templates/cityofgold_43.png',0)),
+    #('Winner', cv2.imread('templates/winner_43.png',0)),
+    ('Big Winner', cv2.imread('templates/bigwinner_43.png',0))
+  ],
+
+  '85':  [
+    ('skull', cv2.imread('templates/skull_85.png',0)),
+    ('Mines 1-1', cv2.imread('templates/mines11_85.png',0)),
+    ('Mines 1-2', cv2.imread('templates/mines12_85.png',0)),
+    ('Mines 1-3', cv2.imread('templates/mines13_85.png',0)),
+    ('Mines 1-4', cv2.imread('templates/mines14_85.png',0)),
+    ('Jungle 2-1', cv2.imread('templates/jungle21_85.png',0)),
+    ('Jungle 2-2', cv2.imread('templates/jungle22_85.png',0)),
+    ('Jungle 2-3', cv2.imread('templates/jungle23_85.png',0)),
+    #('Jungle 2-4', cv2.imread('templates/jungle24_85.png',0)),
+    ('Black Market', cv2.imread('templates/blackmarket_85.png',0)),
+    ('Ice Caves 3-1', cv2.imread('templates/icecaves31_85.png',0)),
+    ('Ice Caves 3-2', cv2.imread('templates/icecaves32_85.png',0)),
+    ('Ice Caves 3-3', cv2.imread('templates/icecaves33_85.png',0)),
+    ('Ice Caves 3-4', cv2.imread('templates/icecaves34_85.png',0)),
+    ('Temple 4-1', cv2.imread('templates/temple41_85.png',0)),
+    ('Temple 4-2', cv2.imread('templates/temple41_85.png',0)),
+    #('Temple 4-3', cv2.imread('templates/temple41_85.png',0)),
+    ('Olmec\'s Lair', cv2.imread('templates/olmecslair_85.png',0)),
+    ('Hell 5-1', cv2.imread('templates/hell51_85.png',0)),
+    ('Hell 5-2', cv2.imread('templates/hell52_85.png',0)),
+    ('Hell 5-3', cv2.imread('templates/hell53_85.png',0)),
+    ('Yama\'s Throne', cv2.imread('templates/yamasthrone_85.png',0)),
+    ('Mothership', cv2.imread('templates/mothership_85.png',0)),
+    ('City of Gold', cv2.imread('templates/cityofgold_85.png',0)),
+    #('Winner', cv2.imread('templates/winner_85.png',0)),
+    ('Big Winner', cv2.imread('templates/bigwinner_85.png',0))
+  ],
+
+  '169': [
+    ('skull', cv2.imread('templates/skull_169.png',0)),
+    ('Mines 1-1', cv2.imread('templates/mines11_169.png',0)),
+    ('Mines 1-2', cv2.imread('templates/mines12_169.png',0)),
+    ('Mines 1-3', cv2.imread('templates/mines13_169.png',0)),
+    ('Mines 1-4', cv2.imread('templates/mines14_169.png',0)),
+    ('Jungle 2-1', cv2.imread('templates/jungle21_169.png',0)),
+    ('Jungle 2-2', cv2.imread('templates/jungle22_169.png',0)),
+    ('Jungle 2-3', cv2.imread('templates/jungle23_169.png',0)),
+    #('Jungle 2-4', cv2.imread('templates/jungle24_169.png',0)),
+    ('Black Market', cv2.imread('templates/blackmarket_169.png',0)),
+    ('Ice Caves 3-1', cv2.imread('templates/icecaves31_169.png',0)),
+    ('Ice Caves 3-2', cv2.imread('templates/icecaves32_169.png',0)),
+    ('Ice Caves 3-3', cv2.imread('templates/icecaves33_169.png',0)),
+    ('Ice Caves 3-4', cv2.imread('templates/icecaves34_169.png',0)),
+    ('Temple 4-1', cv2.imread('templates/temple41_169.png',0)),
+    ('Temple 4-2', cv2.imread('templates/temple41_169.png',0)),
+    #('Temple 4-3', cv2.imread('templates/temple41_169.png',0)),
+    ('Olmec\'s Lair', cv2.imread('templates/olmecslair_169.png',0)),
+    ('Hell 5-1', cv2.imread('templates/hell51_169.png',0)),
+    ('Hell 5-2', cv2.imread('templates/hell52_169.png',0)),
+    ('Hell 5-3', cv2.imread('templates/hell53_169.png',0)),
+    ('Yama\'s Throne', cv2.imread('templates/yamasthrone_169.png',0)),
+    ('Mothership', cv2.imread('templates/mothership_169.png',0)),
+    ('City of Gold', cv2.imread('templates/cityofgold_169.png',0)),
+    #('Winner', cv2.imread('templates/winner_169.png',0)),
+    ('Big Winner', cv2.imread('templates/bigwinner_169.png',0))
+  ]
 }
 
 def get_templates(key="169"):

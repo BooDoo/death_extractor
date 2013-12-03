@@ -25,6 +25,7 @@ class CvVideo(object):
     self.fourcc = stream.get(cv2.cv.CV_CAP_PROP_FOURCC)
     self.img = None
     self.gray = None
+    self.found_template = None
 
     self.crop_width, self.crop_height = [int(self.width*scale_width), int(self.height*scale_height)]
     self.output = cv2.VideoWriter(self.temp_vid,0,7,(self.crop_width,self.crop_height))
@@ -348,13 +349,14 @@ class CvVideo(object):
     target = self.get_roi(False, roi_rect) if use_roi else self.gray
     
     #dump checked frames
-    cv2.imwrite('dump/'+ self.vid_id + '/' + str(int(self.frame)) + '.png', target)
+    #cv2.imwrite('dump/'+ self.vid_id + '/' + str(int(self.frame)) + '.png', target)
     
-    for template in templates:
+    for label,template in templates:
       res = cv2.matchTemplate(target, template, method)
       min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
       if max_val >= threshold:
         #cv2.imwrite('dump/'+ self.vid_id + '/' + str(int(self.frame)) + '-found.png', target)
+        self.found_template = label
         return True
     
     return False
