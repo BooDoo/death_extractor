@@ -68,7 +68,7 @@ def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_
       vid.upload_gif_tumblr(tumblr)
     if remove_source:
       os.remove(os.path.join(vid_path, input_file))
-  except (cv2.error, IOError, TypeError, AttributeError) as e:
+  except (cv2.error, OSError, IOError, TypeError, AttributeError) as e:
     print e
     print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
