@@ -1,7 +1,5 @@
 import cv2
 
-#TO GET: WORM, HAUNTED CASTLE
-
 _templates = {
   '43':  [
     ('-1', cv2.imread('templates/stage1_43.png',0)),
@@ -14,8 +12,8 @@ _templates = {
     ('Temple', cv2.imread('templates/temple_43.png',0)),
     ('Hell', cv2.imread('templates/hell_43.png',0)),
     ('Black Market', cv2.imread('templates/blackmarket_43.png',0)),
-    #('Worm', cv2.imread('templates/worm_43.png',0)),
-    #('Haunted Castle', cv2.imread('templates/castle_43.png',0)),
+    ('Worm', cv2.imread('templates/worm_43.png',0)),
+    ('Haunted Castle', cv2.imread('templates/castle_43.png',0)),
     ('Yama\'s Throne', cv2.imread('templates/yamasthrone_43.png',0)),
     ('Mothership', cv2.imread('templates/mothership_43.png',0)),
     ('City of Gold', cv2.imread('templates/cityofgold_43.png',0)),
@@ -36,8 +34,8 @@ _templates = {
     ('Temple', cv2.imread('templates/temple_85.png',0)),
     ('Hell', cv2.imread('templates/hell_85.png',0)),
     ('Black Market', cv2.imread('templates/blackmarket_85.png',0)),
-    #('Worm', cv2.imread('templates/worm_85.png',0)),
-    #('Haunted Castle', cv2.imread('templates/castle_85.png',0)),
+    ('Worm', cv2.imread('templates/worm_85.png',0)),
+    ('Haunted Castle', cv2.imread('templates/castle_85.png',0)),
     ('Yama\'s Throne', cv2.imread('templates/yamasthrone_85.png',0)),
     ('Mothership', cv2.imread('templates/mothership_85.png',0)),
     ('City of Gold', cv2.imread('templates/cityofgold_85.png',0)),
@@ -58,8 +56,8 @@ _templates = {
     ('Temple', cv2.imread('templates/temple_169.png',0)),
     ('Hell', cv2.imread('templates/hell_169.png',0)),
     ('Black Market', cv2.imread('templates/blackmarket_169.png',0)),
-    #('Worm', cv2.imread('templates/worm_169.png',0)),
-    #('Haunted Castle', cv2.imread('templates/castle_169.png',0)),
+    ('Worm', cv2.imread('templates/worm_169.png',0)),
+    ('Haunted Castle', cv2.imread('templates/castle_169.png',0)),
     ('Yama\'s Throne', cv2.imread('templates/yamasthrone_169.png',0)),
     ('Mothership', cv2.imread('templates/mothership_169.png',0)),
     ('City of Gold', cv2.imread('templates/cityofgold_169.png',0)),
