@@ -48,23 +48,36 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
 
   #new template finding logic: UI skull-based, more tightly targeted
   vid.read_frame(vid.framecount - 1)
-  vid.until_template(-1, templates=vid.templates[:1])
-  vid.while_template(frame_skip=6, templates=vid.templates[:1])
-  vid.skip_back(3.75)
-  vid.clip_to_output(frame_skip=out_frame_skip, duration=out_duration, use_roi=use_roi)
-  vid.gif_from_temp_vid(color=gif_color,delay=gif_delay)
-  vid.clear_temp_vid()
-
-  #Find stage of death?
-  #This would be really slow, as it checks ~30 templates each time pass
-  '''
+  vid.until_template(-1, templates=vid.templates[-3:])
+  if vid.template_found=="skull":
+    vid.while_template(frame_skip=6, templates=vid.templates[-3:])
+    vid.skip_back(3.75)
+    vid.clip_to_output(frame_skip=out_frame_skip, duration=out_duration, use_roi=use_roi)
+    vid.gif_from_temp_vid(color=gif_color,delay=gif_delay)
+    vid.clear_temp_vid()
+  else:
+    print "I guess they won?",vid.template_found
+    raise IOError("Nothing to see here!")
+    
+  #Find stage of death
+  #NOTE: Using ROI in template_check did not noticably improve speed.
+  #Scrub back for the "circle wipe" signaling a new stage,
+  #Scrub ahead for the stage label (MINES, JUNGLE, MOTHERSHIP, et c.)
+  #If numbered world, run second check for if -1, -2, -3 or -4
   vid.skip_back(out_duration)
   while vid.gray.sum() > 2500000:
     vid.skip_frames(-20)
   vid.skip_frames(60)
-  vid.until_template(frame_skip=5, templates=vid.templates[1:-2])
-  print "Death stage was", vid.found_template
-  '''
+  #vid.frame_to_file("dump/%s_%i.png" % (vid.vid_id, vid.frame))
+  vid.until_template(frame_skip=10, templates=vid.templates[4:-3])
+  vid.tumblr_tags.append(vid.template_found)
+  worlds = {"Mines": 1, "Jungle": 2, "Ice Caves": 3, "Temple": 4, "Hell": 5} # dict( (t[0], i+1) for i,t in enumerate(templates[4:9]) )
+  if vid.template_found in worlds.keys():
+    level_key = "%i" % worlds[vid.template_found]
+    if vid.template_best(templates=vid.templates[:4]):
+      level_key += vid.template_found
+      vid.tumblr_tags.append(level_key)
+  print "Death level was:", level_key
 
 #TODO: Clean up these rat's nests of arguments!
 def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=8, quiet=False, remove_source=True, to_imgur=False, to_tumblr=False):

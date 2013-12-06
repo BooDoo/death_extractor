@@ -23,9 +23,10 @@ class CvVideo(object):
     self.width = stream.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
     self.height = stream.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)   
     self.fourcc = stream.get(cv2.cv.CV_CAP_PROP_FOURCC)
+    self.tumblr_tags = ["spelunky","daily challenge","death","gif","book of the dead",self.uploader]
     self.img = None
     self.gray = None
-    self.found_template = None
+    self.template_found = None
 
     self.crop_width, self.crop_height = [int(self.width*scale_width), int(self.height*scale_height)]
     self.output = cv2.VideoWriter(self.temp_vid,0,7,(self.crop_width,self.crop_height))
@@ -87,47 +88,80 @@ class CvVideo(object):
       self._roi_rect = (minX, minY, maxX, maxY)
 
   @property
-  def roi(self, roi_rect=None):
+  def roi(self):
     """Subset of pixels (ROI) from current frame"""
-    if not roi_rect:
-      roi_rect = self.roi_rect
     if self.img == None:
       self.read()
-    return self.img[roi_rect[1]:roi_rect[3], roi_rect[0]:roi_rect[2]]
+    return self.img[self.roi_rect[1]:self.roi_rect[3], self.roi_rect[0]:self.roi_rect[2]]
   
   @roi.setter
   def roi(self, rect):
     self.roi_rect = rect
 
   @property
-  def roi_gray(self, roi_rect=None):
+  def roi_gray(self):
     """Subset of pixels (ROI) from current frame, in grayscale"""
-    if not roi_rect:
-      roi_rect = self.roi_rect
     if self.gray == None:
       self.read()
-    return self.gray[roi_rect[1]:roi_rect[3], roi_rect[0]:roi_rect[2]]
+    return self.gray[self.roi_rect[1]:self.roi_rect[3], self.roi_rect[0]:self.roi_rect[2]]
 
   def roi_reset(self):
     """Reset roi_rect to default for GIF output"""
     self.roi_rect = self.roi_default
     return self #chainable
 
+  @property
+  def sum(self, color=False, use_roi=False, roi_rect=None):
+    if self.gray == None:
+      self.read()
+
+    if use_roi:
+      frame = get_roi(color=color, roi_rect=roi_rect)
+    else:
+      frame = self.gray
+
+    return frame.sum()
+
+  @property
+  def nonzero_count(self, color=False, use_roi=False, roi_rect=None):
+    if self.gray == None:
+      self.read()
+
+    if use_roi:
+      frame = get_roi(color=color, roi_rect=roi_rect)
+    else:
+      frame = self.gray
+
+    return len(frame.nonzero()[0])
+
+  @property
+  def nonzero_factor(self, color=False, use_roi=False, roi_rect=None):
+    if self.gray == None:
+      self.read()
+
+    if use_roi:
+      frame = get_roi(color=color, roi_rect=roi_rect)
+    else:
+      frame = self.gray
+
+    return len(frame.nonzero()[0]) / float(frame.size)
+
   def set_frame(self, frame=0):
     """A chainable alias for CvVideo.frame = `frame`"""
     self.frame = frame
     return self #chainable
   
-  def get_roi(self, color=True, rect=None):
+  def get_roi(self, color=True, roi_rect=None):
     """Function to get roi with custom params"""
     if self.img == None:
       self.read()
-    if not rect:
+
+    if not roi_rect:
       return self.roi if color else self.roi_gray
     else:
       source = self.img if color else self.gray
-      rect = rect if rect else self.roi_default
-      return source[rect[1]:rect[3], rect[0]:rect[2]]
+      roi_rect = roi_rect if roi_rect else self.roi_default
+      return source[roi_rect[1]:roi_rect[3], roi_rect[0]:roi_rect[2]]
   
   def _skip(self, frames=1):
     """Generic function for scrubbing back/forward by `frames`"""
@@ -313,8 +347,11 @@ class CvVideo(object):
     print "Uploaded to:",uploaded_image.link
     return self #chainable
 
-  def upload_gif_tumblr(self, tumblr, blog_name=None, link_timestamp=True):
+  def upload_gif_tumblr(self, tumblr, blog_name=None, link_timestamp=True, tags=None):
     blog_name = blog_name if blog_name else os.getenv('TUMBLR_BLOG_NAME')
+    if tags == None:
+      tags = self.tumblr_tags
+
     if link_timestamp:
       self.vid_link += "&t=%is" % (self.clip_start or 0)
 
@@ -329,11 +366,11 @@ class CvVideo(object):
       #caption="Watch full: "+self.vid_link,
       slug=self.vid_id,
       link=self.vid_link,
-      tags=["spelunky","daily challenge","death","gif","book of the dead",self.uploader]
+      tags=tags
     )
     print upload_response
     return self #chainable
-    
+
   #template_check is NOT chainable!
   def template_check(self, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, use_roi=False, roi_rect=None):
     """Cycle through each image in `templates` and perform OpenCV `matchTemplate` until match found (or return False)"""
@@ -356,8 +393,45 @@ class CvVideo(object):
       min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
       if max_val >= threshold:
         #cv2.imwrite('dump/'+ self.vid_id + '/' + str(int(self.frame)) + '-found.png', target)
-        self.found_template = label
+        self.template_found = label
+        #print "max_val for %s was %f" % (label, max_val)
         return True
+    
+    return False
+
+  #template_check is NOT chainable!
+  def template_best(self, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, use_roi=False, roi_rect=None):
+    """Cycle through each image in `templates` and perform OpenCV `matchTemplate`, return best match (or return False)"""
+    #TODO: Enable checking against min_val for methods where that's more appropriate
+    
+    if templates == None and hasattr(self, 'templates'):
+      templates = self.templates
+    elif templates == None:
+      raise cv2.error("No template(s) to match against!")
+    
+    roi_rect = roi_rect if roi_rect else self.roi_default
+    
+    target = self.get_roi(False, roi_rect) if use_roi else self.gray
+    
+    #dump checked frames
+    #cv2.imwrite('dump/'+ self.vid_id + '/' + str(int(self.frame)) + '.png', target)
+    
+    matches = {} #dict((label,None) for label,template in templates)
+    
+    for label,template in templates:
+      res = cv2.matchTemplate(target, template, method)
+      min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+      if max_val >= threshold:
+        #cv2.imwrite('dump/'+ self.vid_id + '/' + str(int(self.frame)) + '-found.png', target)
+        #self.template_found = label
+        matches[label] = max_val
+        print "max_val for %s was %f" % (label, max_val)
+        #return True
+    
+    if matches:
+      match_best = [label for label in sorted(matches, key=matches.get, reverse=True)][0]
+      self.template_found = match_best
+      return match_best
     
     return False
   
