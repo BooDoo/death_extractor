@@ -56,8 +56,9 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
     vid.gif_from_temp_vid(color=gif_color,delay=gif_delay)
     vid.clear_temp_vid()
   else:
-    print "I guess they won?",vid.template_found
-    raise IOError("Nothing to see here!")
+    sys.stdout.write("I guess they won?"+vid.template_found+"\n\n")
+    sys.stdout.flush()
+    raise IOError("No death to extract!")
     
   #Find stage of death
   #NOTE: Using ROI in template_check did not noticably improve speed.
@@ -77,7 +78,8 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
     if vid.template_best(templates=vid.templates[:4]):
       level_key += vid.template_found
       vid.tumblr_tags.append(level_key)
-  print "Death level was:", level_key
+  sys.stdout.write("\nDeath level was:"+level_key+"\n")
+  sys.stdout.flush()
 
 #TODO: Clean up these rat's nests of arguments!
 def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=8, quiet=False, remove_source=True, to_imgur=False, to_tumblr=False):

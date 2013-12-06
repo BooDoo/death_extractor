@@ -308,7 +308,8 @@ class CvVideo(object):
     except os.error as e:
       raise cv2.error("Temp AVI doesn't exist!")
 
-    print "\nWriting to", out_file, "..."
+    sys.stdout.write("\nWriting to"+out_file+"...")
+    sys.stdout.flush()
     
     command = ['convert']
     if delay > 0:
@@ -328,7 +329,8 @@ class CvVideo(object):
 
     subprocess.call(command)
 
-    print "Write done"
+    sys.stdout.write("done!\n")
+    sys.stdout.flush()
     return self #chainable
 
   def clear_temp_vid(self):
@@ -356,10 +358,12 @@ class CvVideo(object):
       self.vid_link += "&t=%is" % (self.clip_start or 0)
 
     if os.path.getsize(self.out_gif) > 1010000:
-      print "Output GIF is too large. Using frame_skip 5..."
+      sys.stdout.write("Output GIF is too large. Using frame_skip 5...\n")
+      sys.stdout.flush
       self.reset_output().skip_back(4).clip_to_output(frame_skip=5, duration=4, use_roi=True).gif_from_temp_vid(color=False,delay=10)
 
-    print "Uploading",self.out_gif,"to",blog_name,"..."
+    sys.stdout.write("Uploading"+self.out_gif+"to"+blog_name+"...")
+    sys.stdout.flush()
     upload_response = tumblr.create_photo(
       blog_name,
       data=self.out_gif,
@@ -368,7 +372,7 @@ class CvVideo(object):
       link=self.vid_link,
       tags=tags
     )
-    print upload_response
+    sys.stdout.write("%s.\n\n" % upload_response)
     return self #chainable
 
   #template_check is NOT chainable!
@@ -422,11 +426,7 @@ class CvVideo(object):
       res = cv2.matchTemplate(target, template, method)
       min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
       if max_val >= threshold:
-        #cv2.imwrite('dump/'+ self.vid_id + '/' + str(int(self.frame)) + '-found.png', target)
-        #self.template_found = label
         matches[label] = max_val
-        print "max_val for %s was %f" % (label, max_val)
-        #return True
     
     if matches:
       match_best = [label for label in sorted(matches, key=matches.get, reverse=True)][0]
