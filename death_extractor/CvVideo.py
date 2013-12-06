@@ -293,6 +293,9 @@ class CvVideo(object):
   
   def gif_from_temp_vid(self, out_file=None, color=False, brightness=100, saturation=100, hue=100, delay=10, fuzz="4%", layers="OptimizeTransparency", flush_map=True):
     """Call ImageMagick's `convert` from shell to create a GIF of video file found at `temp_vid`"""
+    #clear tmp folder:
+    #subprocess.call(['sudo', 'rm', '-r', '/tmp'])
+
     if not out_file:
       out_file = self.out_gif
 
