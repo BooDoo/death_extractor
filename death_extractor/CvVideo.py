@@ -23,7 +23,7 @@ class CvVideo(object):
     self.width = stream.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH)
     self.height = stream.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT)   
     self.fourcc = stream.get(cv2.cv.CV_CAP_PROP_FOURCC)
-    self.tumblr_tags = ["spelunky","daily challenge","death","gif","book of the dead",self.uploader]
+    self.tumblr_tags = ["spelunky","daily challenge","death","gif","book of the dead",self.uploader.replace("_","")]
     self.img = None
     self.gray = None
     self.template_found = None
@@ -345,8 +345,9 @@ class CvVideo(object):
   def upload_gif_imgur(self, imgur, album_id='T6X43'):
     """Upload file at location `out_gif` to Imgur with a description linking to original YouTube source"""
     imgur.refresh_access_token()
-    uploaded_image = imgur.upload_image(self.out_gif, title=self.vid_id, album=album_id, description="Watch full: http://youtube.com/watch?v="+self.vid_id)
-    print "Uploaded to:",uploaded_image.link
+    uploaded_image = imgur.upload_image(self.out_gif, title=self.vid_id, album=album_id, description=", ".join(self.tumblr_tags))
+    sys.stdout.write("Uploaded to: "+uploaded_image.link+"\n")
+    sys.stdout.flush()
     return self #chainable
 
   def upload_gif_tumblr(self, tumblr, blog_name=None, link_timestamp=True, tags=None):
@@ -362,7 +363,7 @@ class CvVideo(object):
       sys.stdout.flush
       self.reset_output().skip_back(4).clip_to_output(frame_skip=5, duration=4, use_roi=True).gif_from_temp_vid(color=False,delay=10)
 
-    sys.stdout.write("Uploading"+self.out_gif+"to"+blog_name+"...")
+    sys.stdout.write("Uploading "+self.out_gif+" to "+blog_name+"...")
     sys.stdout.flush()
     upload_response = tumblr.create_photo(
       blog_name,
@@ -375,7 +376,7 @@ class CvVideo(object):
     sys.stdout.write("%s.\n\n" % upload_response)
     return self #chainable
 
-  #template_check is NOT chainable!
+  #template methods are NOT chainable!
   def template_check(self, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, use_roi=False, roi_rect=None):
     """Cycle through each image in `templates` and perform OpenCV `matchTemplate` until match found (or return False)"""
     #TODO: Enable checking against min_val for methods where that's more appropriate
@@ -403,7 +404,6 @@ class CvVideo(object):
     
     return False
 
-  #template_check is NOT chainable!
   def template_best(self, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, use_roi=False, roi_rect=None):
     """Cycle through each image in `templates` and perform OpenCV `matchTemplate`, return best match (or return False)"""
     #TODO: Enable checking against min_val for methods where that's more appropriate
@@ -435,20 +435,34 @@ class CvVideo(object):
     
     return False
   
-  def until_template(self, interval=0.5, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, frame_skip=None, use_roi=False, roi_rect=None):
+  def until_template(self, interval=0.5, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, frame_skip=None, use_roi=False, roi_rect=None, max_length=None):
     """Scrub through video until a template is found"""
     frame_skip = frame_skip if frame_skip else interval*self.fps
+    max_length = max_length if max_length else self.duration
     
-    while not self.template_check(templates, threshold, method):
+    first_frame = self.frame
+    max_length *= self.fps
+    
+    while abs(self.frame - first_frame) < max_length and not self.template_check(templates, threshold, method):
       self.skip_frames(frame_skip)
-      
-    return self #chainable
+    
+    if abs(self.frame - first_frame) > max_length:
+      return False
+    else:
+      return True
 
-  def while_template(self, interval=0.5, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, frame_skip=None, use_roi=False, roi_rect=None):
+  def while_template(self, interval=0.5, templates=None, threshold=0.84, method=cv2.TM_CCOEFF_NORMED, frame_skip=None, use_roi=False, roi_rect=None, max_length=None):
     """Scrub through video until no template is matched"""
     frame_skip = frame_skip if frame_skip else interval*self.fps
+    max_length = max_length if max_length else self.duration
     
-    while self.template_check(templates, threshold, method):
+    first_frame = self.frame
+    max_length *= self.fps
+    
+    while abs(self.frame - first_frame) < max_length and self.template_check(templates, threshold, method):
       self.skip_frames(frame_skip)
-      
-    return self #chainable
+    
+    if abs(self.frame - first_frame) > max_length:
+      return False
+    else:
+      return True

@@ -38,7 +38,7 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
   if not quiet:
     print "Using templates_[",["".join(str(n) for n in vid.aspect_ratio)],"]"
     print "Cropped dimensions (video):", vid.crop_width, vid.crop_height
-    print "Cropped dimensions (frames):", vid._maxX - vid._minX, vid._maxY - vid._minY
+    #print "Cropped dimensions (frames):", vid._maxX - vid._minX, vid._maxY - vid._minY
   
   #Start at last frame, step back 1s at a time looking for skull UI element
   #Scrub forward by ~0.2s increment until skull is gone
@@ -50,7 +50,7 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
   vid.read_frame(vid.framecount - 1)
   vid.until_template(-1, templates=vid.templates[-3:])
   if vid.template_found=="skull":
-    vid.while_template(frame_skip=6, templates=vid.templates[-3:])
+    vid.while_template(frame_skip=6, templates=vid.templates[-3:], max_length=300)
     vid.skip_back(3.75)
     vid.clip_to_output(frame_skip=out_frame_skip, duration=out_duration, use_roi=use_roi)
     vid.gif_from_temp_vid(color=gif_color,delay=gif_delay)
@@ -68,18 +68,21 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
   vid.skip_back(out_duration)
   while vid.gray.sum() > 2500000:
     vid.skip_frames(-20)
+  vid.frame_to_file("dump/%s_%i.png" % (vid.vid_id, vid.frame))
   vid.skip_frames(60)
-  #vid.frame_to_file("dump/%s_%i.png" % (vid.vid_id, vid.frame))
-  vid.until_template(frame_skip=10, templates=vid.templates[4:-3])
-  vid.tumblr_tags.append(vid.template_found)
-  worlds = {"Mines": 1, "Jungle": 2, "Ice Caves": 3, "Temple": 4, "Hell": 5} # dict( (t[0], i+1) for i,t in enumerate(templates[4:9]) )
-  if vid.template_found in worlds.keys():
-    level_key = "%i" % worlds[vid.template_found]
-    if vid.template_best(templates=vid.templates[:4]):
-      level_key += vid.template_found
-      vid.tumblr_tags.append(level_key)
-  sys.stdout.write("\nDeath level was:"+level_key+"\n")
-  sys.stdout.flush()
+  vid.frame_to_file("dump/%s_%i.png" % (vid.vid_id, vid.frame))
+  if vid.until_template(frame_skip=10, templates=vid.templates[4:-3], max_length=3):
+    vid.tumblr_tags.append(vid.template_found)
+    worlds = {"Mines": 1, "Jungle": 2, "Ice Caves": 3, "Temple": 4, "Hell": 5} # dict( (t[0], i+1) for i,t in enumerate(templates[4:9]) )
+    if vid.template_found in worlds.keys():
+      level_key = "%i" % worlds[vid.template_found]
+      if vid.template_best(templates=vid.templates[:4]):
+        level_key += vid.template_found
+        vid.tumblr_tags.append(level_key)
+    else:
+      level_key = vid.template_found
+    sys.stdout.write("\nDeath level was: "+level_key+"\n")
+    sys.stdout.flush()
 
 #TODO: Clean up these rat's nests of arguments!
 def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=8, quiet=False, remove_source=True, to_imgur=False, to_tumblr=False):
