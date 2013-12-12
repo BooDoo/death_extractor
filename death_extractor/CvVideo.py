@@ -312,7 +312,7 @@ class CvVideo(object):
     except os.error as e:
       raise cv2.error("Temp AVI doesn't exist!")
 
-    sys.stdout.write("\nWriting to"+out_file+"...")
+    sys.stdout.write("\nWriting to "+out_file+"...")
     sys.stdout.flush()
     
     command = ['convert']
