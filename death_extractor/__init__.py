@@ -25,6 +25,8 @@ try:
     TUMBLR_OAUTH_SECRET
   )
 except pyimgur.requests.exceptions.ConnectionError as e:
+  imgur = None
+  tumblr = None
   print "No internet?"
 
 def upload_gif_imgur(vid, imgur=imgur, album_id='T6X43', description=None, link_timestamp=True):
@@ -106,7 +108,8 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
   #Scrub ahead for the stage label (MINES, JUNGLE, MOTHERSHIP, et c.)
   #If numbered world, run second check for if -1, -2, -3 or -4
   vid.skip_back(out_duration)
-  while vid.gray.sum() > 2500000:
+  init_sum = vid.gray.sum()
+  while vid.gray.sum() > min( (init_sum / 4.0), 2500000):
     vid.skip_frames(-20)
   vid.frame_to_file("dump/%s_%i.png" % (vid.vid_id, vid.frame))
   vid.skip_frames(60)
