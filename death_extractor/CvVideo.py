@@ -171,16 +171,17 @@ class CvVideo(object):
     sys.stdout.flush()
     return self #for chaining
     
-  def read(self):
+  def read(self, frame=None):
     """Read next frame from stream and save image to img/gray properties"""
+    if frame:
+      self.frame = frame
     ret, self.img = self.stream.read()
     self.gray = cv2.cvtColor(self.img, cv2.cv.CV_BGR2GRAY)
     return self #for chaining
     
-  def read_frame(self, frame):
-    """Go to `frame` in stream, read image to img/gray properties"""
-    self.frame = frame
-    return self.read() #chainable
+  def read_frame(self, frame=None):
+    """Convenience alias for `read()`"""
+    return self.read(frame) #chainable
 
   def read_time(self, seconds):
     """Go to `seconds` in stream, read image to img/gray properties""" 
@@ -343,40 +344,6 @@ class CvVideo(object):
     except IOError as e:
       print e
 
-    return self #chainable
-
-  def upload_gif_imgur(self, imgur, album_id='T6X43'):
-    """Upload file at location `out_gif` to Imgur with a description linking to original YouTube source"""
-    imgur.refresh_access_token()
-    uploaded_image = imgur.upload_image(self.out_gif, title=self.vid_id, album=album_id, description=", ".join(self.tumblr_tags))
-    sys.stdout.write("Uploaded to: "+uploaded_image.link+"\n")
-    sys.stdout.flush()
-    return self #chainable
-
-  def upload_gif_tumblr(self, tumblr, blog_name=None, link_timestamp=True, tags=None):
-    blog_name = blog_name if blog_name else os.getenv('TUMBLR_BLOG_NAME')
-    if tags == None:
-      tags = self.tumblr_tags
-
-    if link_timestamp:
-      self.vid_link += "&t=%is" % (self.clip_start or 0)
-
-    if os.path.getsize(self.out_gif) > 1010000:
-      sys.stdout.write("Output GIF is too large. Using frame_skip 5...\n")
-      sys.stdout.flush
-      self.reset_output().skip_back(4).clip_to_output(frame_skip=5, duration=4, use_roi=True).gif_from_temp_vid(color=False,delay=10)
-
-    sys.stdout.write("Uploading "+self.out_gif+" to "+blog_name+"...")
-    sys.stdout.flush()
-    upload_response = tumblr.create_photo(
-      blog_name,
-      data=self.out_gif,
-      #caption="Watch full: "+self.vid_link,
-      slug=self.vid_id,
-      link=self.vid_link,
-      tags=tags
-    )
-    sys.stdout.write("%s.\n\n" % upload_response)
     return self #chainable
 
   #template methods are NOT chainable!

@@ -1,7 +1,7 @@
 import os, sys, subprocess
 import cv2
 import pyimgur
-import imgur
+import imgur as my_imgur
 import pytumblr
 import youtube as yt
 import util
@@ -9,8 +9,8 @@ from CvVideo import CvVideo
 from RepeatedTimer import RepeatedTimer as set_interval
 
 #Assign some custom utility functions to pyimgur module:
-pyimgur.init_with_refresh = imgur.imgur_init_with_refresh
-pyimgur.Imgur.manual_auth = imgur.imgur_manual_auth
+pyimgur.init_with_refresh = my_imgur.imgur_init_with_refresh
+pyimgur.Imgur.manual_auth = my_imgur.imgur_manual_auth
 
 IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_ALBUM_ID, IMGUR_REFRESH_TOKEN = [os.getenv(line.rstrip()) for line in open('imgur_secrets','r')]
 TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET, TUMBLR_OAUTH_TOKEN, TUMBLR_OAUTH_SECRET, TUMBLR_BLOG_NAME = [os.getenv(line.rstrip()) for line in open('tumblr_secrets','r')]
@@ -26,6 +26,46 @@ try:
   )
 except pyimgur.requests.exceptions.ConnectionError as e:
   print "No internet?"
+
+def upload_gif_imgur(vid, imgur=imgur, album_id='T6X43', description=None, link_timestamp=True):
+  """Upload file at location `vid.out_gif` to Imgur with a description linking to original YouTube source"""
+  if link_timestamp:
+    vid_link = vid.vid_link + "&t=%is" % (vid.clip_start or 0)
+  if description == None:
+    description= "Watch full: " + vid_link
+
+  imgur.refresh_access_token()
+  uploaded_image = imgur.upload_image(vid.out_gif, title=vid.vid_id, album=album_id, description=description)
+  sys.stdout.write("Uploaded to: "+uploaded_image.link+"\n")
+  sys.stdout.flush()
+  return uploaded_image.link
+
+def upload_gif_tumblr(vid, tumblr=tumblr, blog_name=None, link_timestamp=True, tags=None):
+  blog_name = blog_name if blog_name else os.getenv('TUMBLR_BLOG_NAME')
+  if tags == None:
+    tags = self.tumblr_tags
+  if link_timestamp:
+    vid_link = vid.vid_link + "&t=%is" % (vid.clip_start or 0)
+
+  if os.path.getsize(self.out_gif) > 1010000:
+    sys.stdout.write("Output GIF is too large. Using frame_skip 5...\n")
+    sys.stdout.flush
+    vid.reset_output().skip_back(4).clip_to_output(frame_skip=5, duration=4, use_roi=True)
+    return gif_from_temp_vid(vid, color=False,delay=10)
+
+  sys.stdout.write("Uploading "+vid.out_gif+" to "+blog_name+"...")
+  sys.stdout.flush()
+  upload_response = tumblr.create_photo(
+    blog_name,
+    data=vid.out_gif,
+    #caption="Watch full: "+vid.vid_link,
+    slug=vid.vid_id,
+    link=vid_link,
+    tags=tags
+  )
+  sys.stdout.write("%s.\n\n" % upload_response)
+  sys.stdout.flush()
+  return upload_response
 
 def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=None, quiet=False):
   """Search through a cv2.VideoCapture (using custom `CvVideo` class) for Spelunky death, write frames to GIF (via AVI)"""
@@ -56,7 +96,7 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
     vid.gif_from_temp_vid(color=gif_color,delay=gif_delay)
     vid.clear_temp_vid()
   else:
-    sys.stdout.write("I guess they won?"+vid.template_found+"\n\n")
+    sys.stdout.write("I guess they won? "+vid.template_found+"\n\n")
     sys.stdout.flush()
     raise IOError("No death to extract!")
     
@@ -91,16 +131,16 @@ def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_
     vid = CvVideo(os.path.join(vid_path, input_file))
     extract_death(vid, out_frame_skip=out_frame_skip, out_duration=out_duration, use_roi=use_roi, gif_color=gif_color, gif_delay=gif_delay, quiet=quiet)
     if to_imgur:
-      vid.upload_gif_imgur(imgur)
+      upload_gif_imgur(vid)
     if to_tumblr:
-      vid.upload_gif_tumblr(tumblr)
+      upload_gif_tumblr(vid)
     if remove_source:
       os.remove(os.path.join(vid_path, input_file))
   except (cv2.error, OSError, IOError, TypeError, AttributeError) as e:
     print e
     print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
-    util.recall(extract_and_upload)
+    util.recall(extract_and_upload) #limit how many retries?
 
 if __name__ == '__main__':
   print "Sorry, I'm not made to work that way (yet...)"
