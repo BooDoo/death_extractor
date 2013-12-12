@@ -43,11 +43,11 @@ def upload_gif_imgur(vid, imgur=imgur, album_id='T6X43', description=None, link_
 def upload_gif_tumblr(vid, tumblr=tumblr, blog_name=None, link_timestamp=True, tags=None):
   blog_name = blog_name if blog_name else os.getenv('TUMBLR_BLOG_NAME')
   if tags == None:
-    tags = self.tumblr_tags
+    tags = vid.tumblr_tags
   if link_timestamp:
     vid_link = vid.vid_link + "&t=%is" % (vid.clip_start or 0)
 
-  if os.path.getsize(self.out_gif) > 1010000:
+  if os.path.getsize(vid.out_gif) > 1010000:
     sys.stdout.write("Output GIF is too large. Using frame_skip 5...\n")
     sys.stdout.flush
     vid.reset_output().skip_back(4).clip_to_output(frame_skip=5, duration=4, use_roi=True)
