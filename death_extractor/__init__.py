@@ -52,8 +52,8 @@ def upload_gif_tumblr(vid, tumblr=tumblr, blog_name=None, link_timestamp=True, t
   if os.path.getsize(vid.out_gif) > 1010000:
     sys.stdout.write("Output GIF is too large. Using frame_skip 5...\n")
     sys.stdout.flush
-    vid.reset_output().skip_back(4).clip_to_output(frame_skip=5, duration=4, use_roi=True)
-    return gif_from_temp_vid(vid, color=False,delay=10)
+    vid.reset_output().read_frame(vid.gif_start).clip_to_output(frame_skip=5, duration=4, use_roi=True)
+    vid.gif_from_temp_vid(color=False,delay=10)
 
   sys.stdout.write("Uploading "+vid.out_gif+" to "+blog_name+"...")
   sys.stdout.flush()
@@ -93,7 +93,9 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
   vid.until_template(-1, templates=vid.templates[-3:])
   if vid.template_found=="skull":
     vid.while_template(frame_skip=6, templates=vid.templates[-3:], max_length=300)
+    vid.death_frame = vid.frame
     vid.skip_back(3.75)
+    vid.gif_start = vid.frame
     vid.clip_to_output(frame_skip=out_frame_skip, duration=out_duration, use_roi=use_roi)
     vid.gif_from_temp_vid(color=gif_color,delay=gif_delay)
     vid.clear_temp_vid()

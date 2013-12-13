@@ -27,6 +27,8 @@ class CvVideo(object):
     self.img = None
     self.gray = None
     self.template_found = None
+    self.death_frame = None
+    self.gif_start = None
 
     self.crop_width, self.crop_height = [int(self.width*scale_width), int(self.height*scale_height)]
     self.output = cv2.VideoWriter(self.temp_vid,0,7,(self.crop_width,self.crop_height))
