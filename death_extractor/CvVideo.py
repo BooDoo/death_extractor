@@ -110,8 +110,7 @@ class CvVideo(object):
     self.roi_rect = self.roi_default
     return self #chainable
 
-  @property
-  def sum(self, color=False, use_roi=False, roi_rect=None):
+  def get_sum(self, color=False, use_roi=False, roi_rect=None):
     if self.gray == None:
       self.read()
 
