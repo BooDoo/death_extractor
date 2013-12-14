@@ -1,6 +1,7 @@
 import os, sys, subprocess
 import cv2
 from templates import get_templates
+from fractions import Fraction
 
 class CvVideo(object):
   #Constructor for the CvVideo object (requires OpenCV2 with ffmpeg support)
@@ -34,17 +35,9 @@ class CvVideo(object):
     self.output = cv2.VideoWriter(self.temp_vid,0,7,(self.crop_width,self.crop_height))
     self.roi_reset()
 
-    #set approx. aspect ratio
-    if self.width == 480:
-      self.aspect_ratio = (4,3)
-    elif self.width == 576:
-      self.aspect_ratio = (8,5)
-    else:
-      self.aspect_ratio = (16,9)
-
-    #and assign templates accordingly:
-    self.template_key = "".join(str(n) for n in self.aspect_ratio)
-    self.templates = get_templates(self.template_key)
+    self.aspect_ratio = Fraction(int(self.width),int(self.height)).limit_denominator(10)
+    self.template_scale = round(self.width/640.0*100)/100 #self.width / 640.0
+    self.templates = get_templates(self.template_scale)
 
   @property
   def roi_default(self):

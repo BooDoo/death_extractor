@@ -72,16 +72,14 @@ def upload_gif_tumblr(vid, tumblr=tumblr, blog_name=None, link_timestamp=True, t
 def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=None, quiet=False):
   """Search through a cv2.VideoCapture (using custom `CvVideo` class) for Spelunky death, write frames to GIF (via AVI)"""
   print "" #newline
-  print vid.vid_id, vid.framecount, vid.fps, vid.fourcc, vid.width, vid.height, vid.aspect_ratio, "..."
+  print vid.vid_id, vid.framecount, vid.fps, vid.fourcc, vid.width, vid.height, "%i:%i" % (vid.aspect_ratio.numerator, vid.aspect_ratio.denominator), "..."
 
   if gif_delay < 0:
     gif_delay = int(round(100.0 / (vid.fps / out_frame_skip)))
 
   if not quiet:
-    print "Using templates_[",["".join(str(n) for n in vid.aspect_ratio)],"]"
-    print "Cropped dimensions (video):", vid.crop_width, vid.crop_height
-    #print "Cropped dimensions (frames):", vid._maxX - vid._minX, vid._maxY - vid._minY
-  
+    print "ROI/Cropped dimensions:", vid.crop_width, vid.crop_height
+
   #Start at last frame, step back 1s at a time looking for skull UI element
   #Scrub forward by ~0.2s increment until skull is gone
   #Go back 3.85 seconds, then export `out_duration` at `vid.fps`/`out_frame_skip` fps
