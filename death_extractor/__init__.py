@@ -7,6 +7,7 @@ import youtube as yt
 import util
 from CvVideo import CvVideo
 from RepeatedTimer import RepeatedTimer as set_interval
+from templates import get_templates
 
 #Assign some custom utility functions to pyimgur module:
 pyimgur.init_with_refresh = my_imgur.imgur_init_with_refresh
@@ -130,6 +131,7 @@ def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_
   input_file = [file for file in os.listdir(vid_path) if not file.endswith('part') and not file.startswith('.')][0]
   try:
     vid = CvVideo(os.path.join(vid_path, input_file))
+    vid.templates = get_templates(vid.template_scale)
     extract_death(vid, out_frame_skip=out_frame_skip, out_duration=out_duration, use_roi=use_roi, gif_color=gif_color, gif_delay=gif_delay, quiet=quiet)
     if to_imgur:
       upload_gif_imgur(vid)

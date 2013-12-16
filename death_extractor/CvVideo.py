@@ -1,6 +1,5 @@
 import os, sys, subprocess
 import cv2
-from templates import get_templates
 from fractions import Fraction
 
 class CvVideo(object):
@@ -37,7 +36,7 @@ class CvVideo(object):
 
     self.aspect_ratio = Fraction(int(self.width),int(self.height)).limit_denominator(10)
     self.template_scale = round(self.width/640.0*100)/100 #self.width / 640.0
-    self.templates = get_templates(self.template_scale)
+    self.templates = None
 
   @property
   def roi_default(self):
