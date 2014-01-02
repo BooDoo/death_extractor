@@ -46,8 +46,31 @@ def populate_queue(queue_file='yt_queue', dl_log_file='yt_log'):
 
   return new_queue
 
-def dl(max_downloads=5, vid_path='vids', queue_file='yt_queue', dl_log_file='yt_log', rate_limit="1.2M", threshold=6):
+def dl(max_downloads=5, dl_target=None, vid_format='18', vid_path='vids', output=None, queue_file='yt_queue', dl_log_file='yt_log', rate_limit="1.2M", threshold=6):
   if len([file for file in os.listdir(vid_path) if not file.endswith('part') and not file.startswith('.')]) < threshold:
-    subprocess.call(['youtube-dl', '--restrict-filenames', '-f18', '-o', os.path.join(vid_path, '%(uploader)s___%(id)s.%(ext)s'), '--download-archive', dl_log_file, '--rate-limit', rate_limit, '--max-downloads', str(max_downloads), '-a', queue_file])
+    #subprocess.call(['youtube-dl', '--restrict-filenames', '-f', vid_format, '-o', os.path.join(vid_path, '%(uploader)s___%(id)s.%(ext)s'), '--download-archive', dl_log_file, '--rate-limit', rate_limit, '--max-downloads', str(max_downloads), '-a', queue_file])
+    call_args = ['youtube-dl', '--restrict-filenames']
+
+    if output:
+      call_args.extend(['-o', output])
+    else:
+      call_args.extend(['-o', os.path.join(vid_path, '%(uploader)s___%(id)s.%(ext)s')])
+
+    if vid_format:
+      call_args.extend(['-f', str(vid_format)])
+    if dl_log_file:
+      call_args.extend(['--download-archive', dl_log_file])
+    if rate_limit:
+      call_args.extend(['--rate-limit', rate_limit])
+    if max_downloads:
+      call_args.extend(['--max-downloads', str(max_downloads)])
+
+    if queue_file:
+      call_args.extend(['-a', queue_file])
+    elif dl_target:
+      call_args.append(dl_target)
+    #Now call it:
+    subprocess.call(call_args)
+
   else:
     print "Enough videos already! Skipping download this pass."
