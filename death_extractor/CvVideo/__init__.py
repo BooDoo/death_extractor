@@ -281,7 +281,7 @@ class CvVideo(object):
     
     #do it
     for frame in range(from_frame, to_frame, frame_skip):
-      self.frame_to_output(color, frame, use_roi)
+      self.frame_to_output(color, frame, use_roi, roi_rect)
       
     return self #chainable
   
