@@ -88,6 +88,18 @@ def send_snapchat(vid, snapchat=snapchat, recipients=None, duration=6):
   media_id = snapchat.upload(vid.out_mp4)
   return snapchat.send(media_id, recipients, time=6)
 
+def snapchat_followback(snapchat=snapchat):
+  usernames = [user['name'] for user in snapchat.get_updates().get('requests')]
+  if len(usernames):
+    results = [snapchat.add_friend(name) for name in usernames]
+    sys.stdout.write("SNAPCHAT: "+str(results.count(True))+" of "+str(len(results))+" new friends added")
+    sys.stdout.flush()
+    return all(results)
+
+  sys.stdout.write("SNAPCHAT: No new friends.")
+  sys.stdout.flush()
+  return True
+
 def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=None, quiet=False):
   """Search through a cv2.VideoCapture (using custom `CvVideo` class) for Spelunky death, write frames to GIF (via AVI)"""
   print "" #newline
@@ -156,6 +168,7 @@ def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_
     if to_tumblr:
       upload_gif_tumblr(vid)
     if to_snapchat:
+      snapchat_followback()
       send_snapchat(vid)
       os.remove(vid.out_mp4)
     if remove_source:
