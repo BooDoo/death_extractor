@@ -78,10 +78,13 @@ def upload_gif_tumblr(vid, tumblr=tumblr, blog_name=None, link_timestamp=True, t
 
 def send_snapchat(vid, snapchat=snapchat, recipients=None, duration=6):
   if recipients == None:
-    recipients = snapchat.username
+    #recipients = snapchat.username
+    recipients = [friend['username'] for friend in snapchat.get_friends()]
+
+  if type(recipients) == list:
+    recipients = ", ".join(recipients)
 
   vid.clip_to_mp4(from_frame=vid.gif_start-30, duration=6)
-
   media_id = snapchat.upload(vid.out_mp4)
   return snapchat.send(media_id, recipients, time=6)
 
