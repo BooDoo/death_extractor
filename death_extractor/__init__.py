@@ -4,6 +4,7 @@ import pyimgur
 import imgur as my_imgur
 import pytumblr
 import youtube as yt
+from pysnap import Snapchat
 import util
 from CvVideo import CvVideo
 from RepeatedTimer import RepeatedTimer as set_interval
@@ -15,6 +16,7 @@ pyimgur.Imgur.manual_auth = my_imgur.imgur_manual_auth
 
 IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_ALBUM_ID, IMGUR_REFRESH_TOKEN = [os.getenv(line.rstrip()) for line in open('imgur_secrets','r')]
 TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET, TUMBLR_OAUTH_TOKEN, TUMBLR_OAUTH_SECRET, TUMBLR_BLOG_NAME = [os.getenv(line.rstrip()) for line in open('tumblr_secrets','r')]
+SNAPCHAT_USER, SNAPCHAT_PASS = [os.getenv(line.rstrip()) for line in open('snapchat_secrets','r')]
 try:
   imgur = pyimgur.init_with_refresh(IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_REFRESH_TOKEN)
   imgur.refresh_access_token()
@@ -25,6 +27,10 @@ try:
     TUMBLR_OAUTH_TOKEN,
     TUMBLR_OAUTH_SECRET
   )
+
+  snapchat = Snapchat()
+  snapchat.login(SNAPCHAT_USER, SNAPCHAT_PASS)
+
 except pyimgur.requests.exceptions.ConnectionError as e:
   imgur = None
   tumblr = None
@@ -69,6 +75,15 @@ def upload_gif_tumblr(vid, tumblr=tumblr, blog_name=None, link_timestamp=True, t
   sys.stdout.write("%s.\n\n" % upload_response)
   sys.stdout.flush()
   return upload_response
+
+def send_snapchat(vid, snapchat=snapchat, recipients=None, duration=6):
+  if recipients == None:
+    recipients = snapchat.username
+
+  vid.clip_to_mp4(from_frame=vid.gif_start-30, duration=6)
+
+  media_id = snapchat.upload(vid.out_mp4)
+  return snapchat.send(media_id, recipients, time=6)
 
 def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=None, quiet=False):
   """Search through a cv2.VideoCapture (using custom `CvVideo` class) for Spelunky death, write frames to GIF (via AVI)"""
@@ -127,7 +142,7 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
     sys.stdout.flush()
 
 #TODO: Clean up these rat's nests of arguments!
-def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=8, quiet=False, remove_source=True, to_imgur=False, to_tumblr=False):
+def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=8, quiet=False, remove_source=True, to_imgur=False, to_tumblr=False, to_snapchat=False):
   input_file = [file for file in os.listdir(vid_path) if not file.endswith('part') and not file.startswith('.')][0]
   try:
     vid = CvVideo(os.path.join(vid_path, input_file))
@@ -137,6 +152,9 @@ def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_
       upload_gif_imgur(vid)
     if to_tumblr:
       upload_gif_tumblr(vid)
+    if to_snapchat:
+      send_snapchat(vid)
+      os.remove(vid.out_mp4)
     if remove_source:
       os.remove(os.path.join(vid_path, input_file))
   except (cv2.error, OSError, IOError, TypeError, AttributeError) as e:
