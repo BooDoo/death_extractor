@@ -90,10 +90,9 @@ def send_snapchat(vid, snapchat=snapchat, recipients=None, duration=6):
 
 def snapchat_followback(snapchat=snapchat):
   updates = snapchat.get_updates()
-  recent_friends = [user['name'] for user in updates.get('requests')]
-  recent_friends.extend([user['name'] for user in updates.get('added_friends')])
-  old_friends = [user['name'] for user in snapchat.get_friends()]
-  new_friends = set(recent_friends).difference(set(old_friends))
+  recent = [user['name'] for user in updates.get('requests')]
+  recent.extend([user['name'] for user in updates.get('added_friends')])
+  new_friends = set(recent).difference(set(snapchat.get_friends()))
   if len(new_friends):
     results = [snapchat.add_friend(name) for name in new_friends]
     sys.stdout.write("SNAPCHAT: "+str(results.count(True))+" of "+str(len(results))+" new friends added\n")
@@ -172,6 +171,7 @@ def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_
     if to_tumblr:
       upload_gif_tumblr(vid)
     if to_snapchat:
+      snapchat.login(SNAPCHAT_USER, SNAPCHAT_PASS)
       snapchat_followback()
       send_snapchat(vid)
       os.remove(vid.out_mp4)
