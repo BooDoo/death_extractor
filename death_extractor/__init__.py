@@ -84,7 +84,7 @@ def send_snapchat(vid, snapchat=snapchat, recipients=None, duration=6):
   if type(recipients) == list:
     recipients = ", ".join(recipients)
 
-  vid.clip_to_mp4(from_frame=vid.gif_start-30, duration=6)
+  vid.clip_to_mp4(from_frame=vid.gif_start-30, duration=6, transpose=1, scale_height=360, crop="out_w=in_w*.5:out_h=in_h*.5")
   media_id = snapchat.upload(vid.out_mp4)
   return snapchat.send(media_id, recipients, time=6)
 
