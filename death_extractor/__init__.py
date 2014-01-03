@@ -1,4 +1,4 @@
-import os, sys, subprocess
+import os, sys, subprocess, traceback
 import cv2
 import pyimgur
 import imgur as my_imgur
@@ -79,7 +79,7 @@ def upload_gif_tumblr(vid, tumblr=tumblr, blog_name=None, link_timestamp=True, t
 def send_snapchat(vid, snapchat=snapchat, recipients=None, duration=6):
   if recipients == None:
     #recipients = snapchat.username
-    recipients = [friend['username'] for friend in snapchat.get_friends()]
+    recipients = [friend['name'] for friend in snapchat.get_friends()]
 
   if type(recipients) == list:
     recipients = ", ".join(recipients)
@@ -89,10 +89,14 @@ def send_snapchat(vid, snapchat=snapchat, recipients=None, duration=6):
   return snapchat.send(media_id, recipients, time=6)
 
 def snapchat_followback(snapchat=snapchat):
-  usernames = [user['name'] for user in snapchat.get_updates().get('requests')]
-  if len(usernames):
-    results = [snapchat.add_friend(name) for name in usernames]
-    sys.stdout.write("SNAPCHAT: "+str(results.count(True))+" of "+str(len(results))+" new friends added")
+  updates = snapchat.get_updates()
+  recent_friends = [user['name'] for user in updates.get('requests')]
+  recent_friends.extend([user['name'] for user in updates.get('added_friends')])
+  old_friends = [user['name'] for user in snapchat.get_friends()]
+  new_friends = set(recent_friends).difference(set(old_friends))
+  if len(new_friends):
+    results = [snapchat.add_friend(name) for name in new_friends]
+    sys.stdout.write("SNAPCHAT: "+str(results.count(True))+" of "+str(len(results))+" new friends added\n")
     sys.stdout.flush()
     return all(results)
 
@@ -175,6 +179,9 @@ def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_
       os.remove(os.path.join(vid_path, input_file))
   except (cv2.error, OSError, IOError, TypeError, AttributeError) as e:
     print e
+    exc_type, exc_value, exc_traceback = sys.exc_info()
+    sys.stdout.write(traceback.print_tb(exc_traceback, limit=None, file=sys.stdout))
+    sys.stdout.flush()
     print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
     os.rename(vid.input_file, "problems/" + vid.input_file_tail)
     util.recall(extract_and_upload) #limit how many retries?
