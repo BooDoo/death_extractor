@@ -1,0 +1,3 @@
+[submodule "death_extractor/CvVideo"]
+	path = death_extractor/CvVideo
+	url = https://github.com/BooDoo/CvVideo.git

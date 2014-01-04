@@ -12,6 +12,13 @@ ImageMagick, youtube-dl, ffmpeg, opencv (with ffmpeg support), pyimgur, pytumblr
 Usage:
 ------
 
+```
+git clone ...  
+cd death_extractor  
+git submodule init
+git submodule update
+```
+
  `imgur_secrets` and `tumblr_secrets` list environment variables which should be populated with your access information for these APIs
 then run `daas.py` (_Deaths As A Service_)
 
@@ -39,22 +46,8 @@ Why Do I Care?
 
 Spelunky deaths are hilarious.  
 GIF is the native language of Tumblr.  
-`CvVideo` is a useful, though limited, class for working with `cv2.VideoCapture` objects.
+[`CvVideo`](https://github.com/BooDoo/CvVideo) is a useful, though limited, class for working with `cv2.VideoCapture` objects.
 
 TODO:
 ------
- [x] Move secrets to environment variables (obviously)  
- [x] Tumblr integration  
- [ ] Map color palettes over grayscale? (e.g. cave/jungle/ice/temple/hell palettes)  
- [ ] Add `last_called` to `CvVideo` to get more meaningful errors from `try:` around chained use?  
- [ ] `CvVideo.template_check()`: enable checking against `min_val` for methods where that's appropriate  
- [ ] Move project-specific features/defaults of `CvVideo` to sub-class  
- [X] Limit how far to scrub looking for template(s) [optional]  
- [X] Test `template_check()` with ROI v. without for efficiency purposes? -- No better.  
- [X] Read death level  
- [ ] Read money at time of death  
- [ ] Read which character  
- [ ] Enable download/processing at higher res (-f36 instead of -f18 in `yt.dl()`)  
- [ ] Support setting parameters (e.g. intervals, imgur v. tumblr) via config/command line  
- [ ] Nested options (e.g. crop region, color/gray GIF) configurable via config/command line  
- [ ] Refactor everything  
+See GitHub repo's Issues page.
