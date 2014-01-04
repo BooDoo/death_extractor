@@ -1,14 +1,20 @@
-import os, sys, subprocess, traceback
+import os, sys, subprocess, traceback, imp
 import cv2
 import pyimgur
 import imgur as my_imgur
 import pytumblr
 import youtube as yt
-from pysnap import Snapchat
 import util
 from CvVideo import CvVideo
 from RepeatedTimer import RepeatedTimer as set_interval
 from templates import get_templates
+try:
+  #Maybe someday pysnap will actually be in pypi?
+  from pysnap import Snapchat
+except ImportError as e:
+  f, filename, desc = imp.find_module('pysnap', ['./pysnap', './death_extractor/pysnap'])
+  pysnap = imp.load_module('pysnap', f, filename, desc)
+  Snapchat = pysnap.Snapchat
 
 #Assign some custom utility functions to pyimgur module:
 pyimgur.init_with_refresh = my_imgur.imgur_init_with_refresh

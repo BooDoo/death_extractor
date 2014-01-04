@@ -1,0 +1,6 @@
+[submodule "death_extractor/CvVideo"]
+	path = death_extractor/CvVideo
+	url = https://github.com/BooDoo/CvVideo.git
+[submodule "death_extractor/pysnap"]
+	path = death_extractor/pysnap
+	url = https://github.com/BooDoo/pysnap

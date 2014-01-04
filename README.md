@@ -7,7 +7,7 @@ Written in/for Python 2.7.5
 Dependencies: 
 -------------
 
-ImageMagick, youtube-dl, ffmpeg, opencv (with ffmpeg support), pyimgur, pytumblr  
+ImageMagick, youtube-dl, ffmpeg, opencv (with ffmpeg support), pyimgur, pytumblr, pysnap (via submodule)  
 
 Usage:
 ------
@@ -15,11 +15,11 @@ Usage:
 ```
 git clone ...  
 cd death_extractor  
-git submodule init
-git submodule update
+git submodule init --update  
 ```
 
- `imgur_secrets` and `tumblr_secrets` list environment variables which should be populated with your access information for these APIs
+ `imgur_secrets`, `tumblr_secrets` and `snapchat_secrets` list environment variables which should be populated with your access information for these 
+APIs  
 then run `daas.py` (_Deaths As A Service_)
 
 How Does It Work?
@@ -39,6 +39,7 @@ With a downloaded video as `cv2.VideoCapture` object:
  - Move ahead a bit and look for world label (e.g. MINES, WORM, OLMEC'S LAIR)
  - If world has stages (e.g. MINES 1-2, TEMPLE 4-3) identify which of the stages this is
  - Upload resulting GIF to Imgur/Tumblr linking source video (at timestamp) and tagged with world/stage of death  
+ - Optionally post a video (cropped, rotated and resized for mobile screen) to Snapchat friends
  - Rinse. Repeat (periodically)  
 
 Why Do I Care?
