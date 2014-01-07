@@ -1,4 +1,4 @@
-import os, sys, subprocess, traceback, imp
+import os, sys, subprocess, traceback, imp, time
 import cv2
 import pyimgur
 import imgur as my_imgur
@@ -15,6 +15,9 @@ except ImportError as e:
   f, filename, desc = imp.find_module('pysnap', ['./pysnap', './death_extractor/pysnap'])
   pysnap = imp.load_module('pysnap', f, filename, desc)
   Snapchat = pysnap.Snapchat
+
+#TEMP WORKAROUND:
+last_snap = 0
 
 #Assign some custom utility functions to pyimgur module:
 pyimgur.init_with_refresh = my_imgur.imgur_init_with_refresh
@@ -176,6 +179,8 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
 #TODO: Clean up these rat's nests of arguments!
 def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=8, quiet=False, remove_source=True, to_imgur=False, to_tumblr=False, to_snapchat=False):
   input_file = [file for file in os.listdir(vid_path) if not file.endswith('part') and not file.startswith('.')][0]
+  #TEMP WORKAROUND:
+  global last_snap
   try:
     vid = SpelunkyVideo(os.path.join(vid_path, input_file))
     vid.templates = get_templates(vid.template_scale)
@@ -184,7 +189,8 @@ def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_
       upload_gif_imgur(vid)
     if to_tumblr:
       upload_gif_tumblr(vid)
-    if to_snapchat:
+    if to_snapchat and time.time() - last_snap >= 60*60*8:
+      last_snap = time.time()
       snapchat.login(SNAPCHAT_USER, SNAPCHAT_PASS)
       snapchat_followback()
       send_snapchat(vid)
@@ -193,11 +199,11 @@ def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_
       os.remove(os.path.join(vid_path, input_file))
   except (cv2.error, OSError, IOError, TypeError, AttributeError) as e:
     print e
+    print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
+    os.rename(vid.input_file, "problems/" + vid.input_file_tail)
     exc_type, exc_value, exc_traceback = sys.exc_info()
     traceback.print_tb(exc_traceback, limit=None, file=sys.stderr)
     sys.stderr.flush()
-    print "\nSkipping",vid.input_file,"due to failure to extract (probably)\nmoving to problems/",vid.input_file_tail
-    os.rename(vid.input_file, "problems/" + vid.input_file_tail)
     util.recall(extract_and_upload) #limit how many retries?
 
 if __name__ == '__main__':
