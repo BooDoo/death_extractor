@@ -40,7 +40,15 @@ try:
 except pyimgur.requests.exceptions.ConnectionError as e:
   imgur = None
   tumblr = None
+  snapchat= None
   print "No internet?"
+
+class SpelunkyVideo(CvVideo):
+  def __init__(self, input_file, gif_path='gifs', temp_path='tmp', splitter='___', crop_factor=(0.6,0.45), crop_width=None, crop_height=None, from_youtube=True, avi_codec=0, avi_fps=7):
+    super(SpelunkyVideo, self).__init__(input_file, gif_path=gif_path, splitter=splitter, crop_factor=crop_factor, crop_width=crop_width, crop_height=crop_height, from_youtube=from_youtube, avi_codec=avi_codec, avi_fps=avi_fps)
+    self.tumblr_tags = ["spelunky","daily challenge","death","gif","book of the dead",self.uploader.replace("_","")]
+    self.death_frame = None
+    self.gif_start = None
 
 def upload_gif_imgur(vid, imgur=imgur, album_id='T6X43', description=None, link_timestamp=True):
   """Upload file at location `vid.out_gif` to Imgur with a description linking to original YouTube source"""
@@ -66,7 +74,7 @@ def upload_gif_tumblr(vid, tumblr=tumblr, blog_name=None, link_timestamp=True, t
     sys.stdout.write("Output GIF is too large. Using frame_skip 5...\n")
     sys.stdout.flush
     vid.reset_output().read_frame(vid.gif_start).clip_to_output(frame_skip=5, duration=4, use_roi=True)
-    vid.gif_from_temp_vid(color=False,delay=10)
+    vid.gif_from_out_avi(color=False,delay=10)
 
   sys.stdout.write("Uploading "+vid.out_gif+" to "+blog_name+"...")
   sys.stdout.flush()
@@ -135,8 +143,8 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
     vid.skip_back(3.75)
     vid.gif_start = vid.frame
     vid.clip_to_output(frame_skip=out_frame_skip, duration=out_duration, use_roi=use_roi)
-    vid.gif_from_temp_vid(color=gif_color,delay=gif_delay)
-    vid.clear_temp_vid()
+    vid.gif_from_out_avi(color=gif_color,delay=gif_delay)
+    vid.clear_out_avi()
   else:
     sys.stdout.write("I guess they won? "+vid.template_found+"\n\n")
     sys.stdout.flush()
@@ -169,7 +177,7 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
 def extract_and_upload(vid_path = 'vids', out_frame_skip=3, out_duration=4, use_roi=True, gif_color=False, gif_delay=8, quiet=False, remove_source=True, to_imgur=False, to_tumblr=False, to_snapchat=False):
   input_file = [file for file in os.listdir(vid_path) if not file.endswith('part') and not file.startswith('.')][0]
   try:
-    vid = CvVideo(os.path.join(vid_path, input_file))
+    vid = SpelunkyVideo(os.path.join(vid_path, input_file))
     vid.templates = get_templates(vid.template_scale)
     extract_death(vid, out_frame_skip=out_frame_skip, out_duration=out_duration, use_roi=use_roi, gif_color=gif_color, gif_delay=gif_delay, quiet=quiet)
     if to_imgur:
