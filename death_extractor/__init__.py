@@ -136,9 +136,9 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
 
   #new template finding logic: UI skull-based, more tightly targeted
   vid.read_frame(vid.framecount - 1)
-  vid.until_template(-1, templates=vid.templates[-3:])
+  vid.template_until(-1, templates=vid.templates[-3:])
   if vid.template_found=="skull":
-    vid.while_template(frame_skip=6, templates=vid.templates[-3:], max_length=300)
+    vid.template_while(frame_skip=6, templates=vid.templates[-3:], max_length=300)
     vid.death_frame = vid.frame
     vid.skip_back(3.75)
     vid.gif_start = vid.frame
@@ -160,7 +160,7 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True, gif_color
   while vid.gray.sum() > min( (init_sum / 4.0), 2500000) and vid.frame > (init_frame - 5*60*30):
     vid.skip_frames(-20)
   vid.skip_frames(60)
-  if vid.until_template(frame_skip=10, templates=vid.templates[4:-3], max_length=3):
+  if vid.template_until(frame_skip=10, templates=vid.templates[4:-3], max_length=3):
     vid.tumblr_tags.append(vid.template_found)
     worlds = {"Mines": 1, "Jungle": 2, "Ice Caves": 3, "Temple": 4, "Hell": 5} # dict( (t[0], i+1) for i,t in enumerate(templates[4:9]) )
     if vid.template_found in worlds.keys():
