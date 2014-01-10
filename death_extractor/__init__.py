@@ -23,7 +23,9 @@ except ImportError as e:
     pysnap = imp.load_module('pysnap', f, filename, desc)
     Snapchat = pysnap.Snapchat
     #TEMP WORKAROUND:
-last_snap = 0
+last_snapchat = 0
+last_tumblr = 0
+last_imgur = 0
 
 #Assign some custom utility functions to pyimgur module:
 pyimgur.init_with_refresh = my_imgur.imgur_init_with_refresh
@@ -239,22 +241,26 @@ def extract_and_upload(vid_path='vids', out_frame_skip=3, out_duration=4,
                   if not file.endswith('part')
                   and not file.startswith('.')][0]
     #TEMP WORKAROUND:
-    global last_snap
+    global last_snapchat
+    global last_tumblr
+    global last_imgur
     try:
         vid = SpelunkyVideo(os.path.join(vid_path, input_file))
         vid.templates = get_templates(vid.template_scale)
         extract_death(vid, out_frame_skip=out_frame_skip,
                       out_duration=out_duration, use_roi=use_roi,
                       gif_color=gif_color, gif_delay=gif_delay, quiet=quiet)
-        if to_imgur:
+        if to_imgur and time.time() - last_imgur > 0:
             upload_gif_imgur(vid)
-        if to_tumblr:
+            last_imgur = time.time()
+        if to_tumblr and time.time() - last_tumblr > 0:
             upload_gif_tumblr(vid)
-        if to_snapchat and time.time() - last_snap >= 60*60*8:
-            last_snap = time.time()
+            last_tumblr = time.time()
+        if to_snapchat and time.time() - last_snapchat >= 60*60*8:
             snapchat.login(SNAPCHAT_USER, SNAPCHAT_PASS)
             snapchat_followback()
             send_snapchat(vid)
+            last_snapchat = time.time()
             os.remove(vid.out_mp4)
         if remove_source:
             os.remove(os.path.join(vid_path, input_file))
