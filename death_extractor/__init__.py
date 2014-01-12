@@ -17,9 +17,9 @@ try:
     #Maybe someday pysnap will actually be in pypi?
     from pysnap import Snapchat
 except ImportError as e:
-    f, filename, desc =
-    imp.find_module('pysnap',
-                    ['./pysnap', './death_extractor/pysnap'])
+    f, filename, desc = imp.find_module(
+        'pysnap', ['./pysnap', './death_extractor/pysnap']
+    )
     pysnap = imp.load_module('pysnap', f, filename, desc)
     Snapchat = pysnap.Snapchat
     #TEMP WORKAROUND:
@@ -31,20 +31,23 @@ last_imgur = 0
 pyimgur.init_with_refresh = my_imgur.imgur_init_with_refresh
 pyimgur.Imgur.manual_auth = my_imgur.imgur_manual_auth
 
-IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET,
-IMGUR_ALBUM_ID, IMGUR_REFRESH_TOKEN =
-[os.getenv(line.rstrip()) for line in open('imgur_secrets', 'r')]
+IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_ALBUM_ID, IMGUR_REFRESH_TOKEN = [
+    os.getenv(line.rstrip()) for line in open('imgur_secrets', 'r')
+]
 
-TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET,
-TUMBLR_OAUTH_TOKEN, TUMBLR_OAUTH_SECRET, TUMBLR_BLOG_NAME =
-[os.getenv(line.rstrip()) for line in open('tumblr_secrets', 'r')]
+(TUMBLR_CONSUMER_KEY, TUMBLR_CONSUMER_SECRET, TUMBLR_OAUTH_TOKEN,
+ TUMBLR_OAUTH_SECRET, TUMBLR_BLOG_NAME) = [
+    os.getenv(line.rstrip()) for line in open('tumblr_secrets', 'r')
+]
 
-SNAPCHAT_USER, SNAPCHAT_PASS =
-[os.getenv(line.rstrip()) for line in open('snapchat_secrets', 'r')]
+SNAPCHAT_USER, SNAPCHAT_PASS = [
+    os.getenv(line.rstrip()) for line in open('snapchat_secrets', 'r')
+]
 
 try:
     imgur = pyimgur.init_with_refresh(
-        IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_REFRESH_TOKEN)
+        IMGUR_CLIENT_ID, IMGUR_CLIENT_SECRET, IMGUR_REFRESH_TOKEN
+    )
     imgur.refresh_access_token()
 
     tumblr = pytumblr.TumblrRestClient(
@@ -69,13 +72,16 @@ class SpelunkyVideo(CvVideo):
                  gif_path='gifs', temp_path='tmp', splitter='___',
                  crop_factor=(0.6, 0.45), crop_width=None, crop_height=None,
                  from_youtube=True, avi_codec=0, avi_fps=7):
-        super(SpelunkyVideo, self)
-        .__init__(input_file, gif_path=gif_path, splitter=splitter,
-                  crop_factor=crop_factor, crop_width=crop_width,
-                  crop_height=crop_height, from_youtube=from_youtube,
-                  avi_codec=avi_codec, avi_fps=avi_fps)
-        self.tumblr_tags = ["spelunky", "daily challenge", "death", "gif",
-                            "book of the dead", self.uploader.replace("_", "")]
+        super(SpelunkyVideo, self).__init__(
+            input_file, gif_path=gif_path, splitter=splitter,
+            crop_factor=crop_factor, crop_width=crop_width,
+            crop_height=crop_height, from_youtube=from_youtube,
+            avi_codec=avi_codec, avi_fps=avi_fps
+        )
+        self.tumblr_tags = [
+            "spelunky", "daily challenge", "death", "gif",
+            "book of the dead", self.uploader.replace("_", "")
+        ]
         self.death_frame = None
         self.gif_start = None
 
@@ -92,9 +98,9 @@ def upload_gif_imgur(vid, imgur=imgur, album='T6X43',
         description = "Watch full: " + vid_link
 
     imgur.refresh_access_token()
-    uploaded_image =
-    imgur.upload_image(vid.out_gif, title=vid.vid_id,
-                       album=album, description=description)
+    uploaded_image = imgur.upload_image(
+        vid.out_gif, title=vid.vid_id, album=album, description=description
+    )
     sys.stdout.write("Uploaded to: " + uploaded_image.link + "\n")
     sys.stdout.flush()
     return uploaded_image.link
@@ -170,9 +176,10 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True,
     Search through a video for Spelunky death, make GIF (via temp AVI)
     """
     print ""
-    print vid.vid_id, vid.framecount, vid.fps, vid.fourcc, vid.width,
-    vid.height,
-    "%i:%i" % (vid.aspect_ratio.numerator, vid.aspect_ratio.denominator), "..."
+    print (
+        vid.vid_id, vid.framecount, vid.fps, vid.width, vid.height,
+        "%i:%i" % (vid.aspect_ratio.numerator, vid.aspect_ratio.denominator)
+    )
 
     if gif_delay < 0:
         gif_delay = int(round(100.0 / (vid.fps / out_frame_skip)))
@@ -218,8 +225,9 @@ def extract_death(vid, out_frame_skip=3, out_duration=4, use_roi=True,
     if vid.template_until(frame_skip=10, templates=vid.templates[4:-3],
                           max_length=3):
         vid.tumblr_tags.append(vid.template_found)
-        worlds = {"Mines": 1, "Jungle": 2, "Ice Caves": 3,
-                  "Temple": 4, "Hell": 5}
+        worlds = {
+            "Mines": 1, "Jungle": 2, "Ice Caves": 3, "Temple": 4, "Hell": 5
+        }
         #ALTERNATE?: # dict((t[0], i+1) for i,t in enumerate(templates[4:9]))
         if vid.template_found in worlds.keys():
             level_key = "%i" % worlds[vid.template_found]
@@ -237,9 +245,11 @@ def extract_and_upload(vid_path='vids', out_frame_skip=3, out_duration=4,
                        use_roi=True, gif_color=False, gif_delay=8, quiet=False,
                        remove_source=True, to_imgur=False, to_tumblr=False,
                        to_snapchat=False):
-    input_file = [file for file in os.listdir(vid_path)
-                  if not file.endswith('part')
-                  and not file.startswith('.')][0]
+    input_file = [
+        file for file in os.listdir(vid_path)
+        if not file.endswith('part')
+        and not file.startswith('.')
+    ][0]
     #TEMP WORKAROUND:
     global last_snapchat
     global last_tumblr
